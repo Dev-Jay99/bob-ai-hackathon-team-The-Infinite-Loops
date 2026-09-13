@@ -1,4 +1,4 @@
-# 🚀 [Your Project Title Here]
+# 🚀 FinGuard: AI-Powered Bank Fraud & AML Investigation Copilot
 
 > ⚠️ **Replace everything in `[ ]` brackets with your actual content before submission.**
 
