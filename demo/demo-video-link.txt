@@ -1,15 +1,14 @@
-https://youtu.be/your-demo-video-link-here
+NOT RECORDED YET — Add your demo video URL here before submission.
 
-Replace the URL above with a link to your demo video.
+Accepted formats: YouTube (unlisted), Loom, Google Drive (view-only link)
+Duration: 3–5 minutes showing the full investigation workflow.
 
-Accepted platforms:
-  - YouTube (public or unlisted)
-  - Loom (https://www.loom.com/share/...)
-  - IBM Box (https://ibm.box.com/s/...)
-  - Google Drive (set to "Anyone with the link can view")
-
-Video requirements:
-  - Length: 3–5 minutes maximum
-  - Must show the application running (not just slides)
-  - Should walk through at least one key feature end-to-end
-  - Audio narration strongly recommended
+Suggested demo script:
+1. Open dashboard — show KPI cards and charts
+2. Open Alerts Queue — filter by CRITICAL
+3. Click ALT-10482 — show full investigator workspace
+4. Walk through: risk score 94/100, 6 risk factors, baseline comparison, transaction sequence
+5. Click nodes on the account network graph
+6. Ask the AI Copilot a question and generate an Investigation Brief
+7. Click Escalate — show status update
+8. Open Reports page — show printable brief

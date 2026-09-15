@@ -4,76 +4,126 @@
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed:
-
-- [ ] [e.g., Python 3.11+]
-- [ ] [e.g., Node.js 18+]
-- [ ] [e.g., Docker Desktop]
-- [ ] [e.g., An IBM Cloud account with watsonx.ai access]
+- [ ] Node.js 18 or higher — check with `node --version`
+- [ ] npm 9 or higher — check with `npm --version`
+- [ ] No PostgreSQL required — the app runs with a local JSON file store by default
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in the values:
+The app works without any `.env` file in JSON mode. To customize:
 
 ```bash
+cd src
 cp .env.example .env
 ```
 
 | Variable | Description | Required |
 |---|---|---|
-| `WATSONX_API_KEY` | Your IBM watsonx.ai API key | Yes |
-| `WATSONX_PROJECT_ID` | Your watsonx.ai project ID | Yes |
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `SLACK_WEBHOOK_URL` | Slack webhook for alerts | No |
+| `PORT` | Server port (default: 3000) | No |
+| `NODE_ENV` | `development` or `production` | No |
+| `DATABASE_URL` | PostgreSQL connection string. Leave blank to use JSON mode | No |
+| `DATA_DIR` | Path to data directory (default: `./data`) | No |
 
 ## Installation
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/[your-org]/[your-repo].git
-cd [your-repo]
+# 1. Clone the repo
+git clone https://github.com/your-org/bob-ai-hackathon-team-The-Infinite-Loops.git
 
-# 2. Install backend dependencies
-[your command — e.g.: pip install -r requirements.txt]
+# 2. Enter the source directory
+cd bob-ai-hackathon-team-The-Infinite-Loops/src
 
-# 3. Install frontend dependencies (if applicable)
-[your command — e.g.: cd frontend && npm install]
+# 3. Install dependencies
+npm install
+```
 
-# 4. Set up the database (if applicable)
-[your command — e.g.: python manage.py migrate]
+## Generate Synthetic Data
+
+This step is required before starting the app for the first time:
+
+```bash
+npm run seed
+```
+
+Expected output:
+```
+FinGuard Synthetic Data Generator
+══════════════════════════════════
+  ✓ accounts.json  (600 records)
+  ✓ transactions.json  (11200+ records)
+  ✓ alerts.json  (240 records)
+  ✓ risk_factors.json  (1440+ records)
+  ✓ investigations.json  (N records)
+  ✓ reports.json  (0 records)
+
+✅ Done. Run "npm start" to launch FinGuard.
 ```
 
 ## Running the Application
 
 ```bash
-# Start the backend
-[your command — e.g.: uvicorn app.main:app --reload]
-
-# Start the frontend (in a separate terminal, if applicable)
-[your command — e.g.: cd frontend && npm run dev]
+npm start
 ```
 
-The application will be available at: `http://localhost:[PORT]`
+The application will be available at: **http://localhost:3000**
+
+You should see:
+```
+FinGuard running at http://localhost:3000
+Database mode: JSON file store
+Environment: development
+```
+
+## Verify It Works
+
+1. Open `http://localhost:3000` — you should be redirected to the dashboard
+2. The KPI cards should show numbers (Total Alerts, Critical, High Risk, Pending)
+3. The Recent Critical Alerts table should show alerts
+4. Navigate to **Alerts Queue** — the table should be populated
+
+## Demo the Benchmark Case
+
+The benchmark case demonstrates the full investigation workflow:
+
+```
+http://localhost:3000/pages/alert-details.html?id=ALT-10482
+```
+
+This opens the Alert Details workspace for:
+- Customer: **Vikram Mehta (A001)**
+- Risk Score: **94/100 — CRITICAL**
+- Transaction: **₹75,000 from Mumbai at 02:17 AM** using an unrecognized iPhone
+- Network: **A001 → A023 → A051 / A072** fraud pass-through chain
 
 ## Running Tests
 
 ```bash
-[your test command — e.g.: pytest tests/ -v]
+# Seed data first if you haven't already
+npm run seed
+
+# Run tests
+npm test
 ```
 
-## Quick Demo (Optional)
+All 20+ tests should pass. Tests cover the health endpoint, dataset integrity, benchmark alert lookup, risk stub, network stub, copilot stub, and investigation action endpoints.
 
-If you have a demo script or sample data to showcase the project quickly:
+## PostgreSQL Mode (Optional)
 
-```bash
-[e.g.: python demo/seed_demo_data.py]
-[e.g.: open http://localhost:8000/demo]
-```
+To use PostgreSQL instead of JSON files:
+
+1. Create a database: `createdb finguard`
+2. Run the schema: `psql finguard < backend/db/schema.sql`
+3. Add to `.env`: `DATABASE_URL=postgresql://user:password@localhost:5432/finguard`
+4. Seed data: `npm run seed` (seeder writes JSON files; you must import them into PG separately or adapt the seeder)
+5. Start: `npm start`
 
 ## Troubleshooting
 
 | Issue | Solution |
 |---|---|
-| [e.g., `ModuleNotFoundError`] | [e.g., Run `pip install -r requirements.txt` again] |
-| [e.g., Database connection refused] | [e.g., Ensure PostgreSQL is running: `docker compose up db`] |
-| [e.g., watsonx.ai 401 error] | [e.g., Check `WATSONX_API_KEY` in your `.env` file] |
+| `Cannot find module '../data/accounts.json'` | Run `npm run seed` first |
+| `Error: listen EADDRINUSE :::3000` | Port 3000 is in use. Set `PORT=3001` in `.env` or kill the process |
+| `npm: command not found` | Install Node.js 18+ from https://nodejs.org |
+| Charts not rendering | Ensure CDN access (Chart.js from jsdelivr.net). Check browser console for errors |
+| vis-network graph blank | Ensure CDN access (unpkg.com). Try refreshing after the network stabilizes |
+| `Cannot GET /pages/dashboard.html` | Make sure you ran `npm start` from inside the `src/` directory |

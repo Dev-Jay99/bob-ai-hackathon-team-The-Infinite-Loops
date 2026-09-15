@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — FinGuard</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/components.css">
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5L12 1zm0 10.9l-3.5-2 .9-1.6L12 10l4-4 1.4 1.4L12 11.9z"/></svg>
+      </div>
+      <div class="sidebar-logo-text">
+        <span class="brand">FinGuard</span>
+        <span class="tagline">AML &amp; Fraud Ops</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Operations</div>
+      <a href="dashboard.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="alerts.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Alerts Queue
+      </a>
+      <a href="network.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Account Network
+      </a>
+      <div class="nav-section-label">Case Management</div>
+      <a href="investigations.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Investigations
+      </a>
+      <a href="alert-details.html?id=ALT-10482" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        AI Copilot
+      </a>
+      <a href="reports.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Reports
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      FinGuard v1.0 · DEMO
+    </div>
+  </aside>
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search alerts, accounts…" id="globalSearch">
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="demo-badge">DEMO SIMULATION</div>
+      <div class="user-avatar">SR</div>
+      <div class="user-info">
+        <span class="name">S. Rajan</span>
+        <span class="role">Senior Investigator</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-header page-header-row">
+      <div>
+        <h1>Operations Dashboard</h1>
+        <p class="subtitle">Real-time fraud and AML alert monitoring</p>
+      </div>
+      <span id="last-updated" class="text-muted text-sm"></span>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card blue">
+        <div class="kpi-label">Total Alerts</div>
+        <div class="kpi-value" id="kpi-total">—</div>
+        <div class="kpi-sub">All time</div>
+      </div>
+      <div class="kpi-card critical">
+        <div class="kpi-label">Critical Alerts</div>
+        <div class="kpi-value" id="kpi-critical">—</div>
+        <div class="kpi-sub">Immediate action required</div>
+      </div>
+      <div class="kpi-card high">
+        <div class="kpi-label">High Risk Alerts</div>
+        <div class="kpi-value" id="kpi-high">—</div>
+        <div class="kpi-sub">Review within 24h</div>
+      </div>
+      <div class="kpi-card pending">
+        <div class="kpi-label">Pending Investigations</div>
+        <div class="kpi-value" id="kpi-pending">—</div>
+        <div class="kpi-sub">Open + Escalated</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div style="margin-bottom:24px;">
+
+      <!-- Risk Distribution -->
+      <div class="card">
+        <div class="card-header" style="justify-content:space-between;">
+          <span class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0110 10"/></svg>
+            Risk Distribution
+          </span>
+          <span style="font-size:12px;color:var(--text-muted);">Composite risk tiers</span>
+        </div>
+        <div id="dist-state" class="state-container" style="padding:40px;">
+          <div class="spinner"></div>
+        </div>
+        <div style="position:relative; max-height:240px; display:none;" id="distChartWrap">
+          <canvas id="distChart" height="240"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Recent Critical Alerts -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          Recent Critical Alerts
+        </span>
+        <a href="alerts.html?riskLevel=CRITICAL" class="btn btn-ghost btn-sm">View All →</a>
+      </div>
+
+      <div id="critical-state">
+        <div class="state-container"><div class="spinner"></div></div>
+      </div>
+
+      <div class="table-wrapper" id="critical-table-wrap" style="display:none;">
+        <table>
+          <thead>
+            <tr>
+              <th>Alert ID</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Risk</th>
+              <th>Status</th>
+              <th>Location</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="critical-alerts-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/dashboard.js"></script>
+</body>
+</html>
