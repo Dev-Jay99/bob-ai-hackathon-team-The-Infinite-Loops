@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinGuard — Suspicious Alerts</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/alerts.css" />
+</head>
+<body>
+<div class="app-layout">
+
+  <aside id="sidebar" class="sidebar"></aside>
+
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+
+    <main class="page-body">
+
+      <!-- Quick Stats -->
+      <div id="alerts-quick-stats" class="alerts-quick-stats"></div>
+
+      <!-- Toolbar: search + filters -->
+      <div class="alerts-toolbar">
+        <div class="search-wrap">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" style="color:var(--text-muted);flex-shrink:0;">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <input type="text" id="alert-search" placeholder="Search alerts, accounts, locations…" />
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-label">Risk:</span>
+          <select id="filter-risk" class="filter-select">
+            <option value="">All Levels</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
+          </select>
+
+          <span class="filter-label">Status:</span>
+          <select id="filter-status" class="filter-select">
+            <option value="">All Status</option>
+            <option value="Open">Open</option>
+            <option value="In Review">In Review</option>
+            <option value="Escalated">Escalated</option>
+            <option value="Monitoring">Monitoring</option>
+            <option value="Closed">Closed</option>
+          </select>
+
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('filter-risk').value='';document.getElementById('filter-status').value='';document.getElementById('alert-search').value='';applyFilters();">
+            Clear
+          </button>
+        </div>
+
+        <span id="alert-count" class="alerts-count"></span>
+      </div>
+
+      <!-- Alerts Table -->
+      <div class="alerts-table-wrapper">
+        <table class="alerts-table">
+          <thead>
+            <tr>
+              <th data-sort="id">Alert ID <span class="sort-icon">↕</span></th>
+              <th data-sort="txId">Transaction ID <span class="sort-icon">↕</span></th>
+              <th data-sort="name">Account <span class="sort-icon">↕</span></th>
+              <th data-sort="amount">Amount <span class="sort-icon">↕</span></th>
+              <th data-sort="risk">Risk Score <span class="sort-icon">↕</span></th>
+              <th data-sort="level">Risk Level <span class="sort-icon">↕</span></th>
+              <th data-sort="location">Location <span class="sort-icon">↕</span></th>
+              <th data-sort="time">Time <span class="sort-icon">↕</span></th>
+              <th data-sort="status">Status <span class="sort-icon">↕</span></th>
+              <th data-sort="priority">Priority <span class="sort-icon">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="alerts-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div style="display:flex;align-items:center;justify-content:flex-end;margin-top:14px;">
+        <div id="pagination" class="pagination"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="../js/app.js"></script>
+<script src="../js/alerts.js"></script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinGuard — Investigations</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/alerts.css" />
+</head>
+<body>
+<div class="app-layout">
+
+  <aside id="sidebar" class="sidebar"></aside>
+
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+
+    <main class="page-body">
+
+      <!-- Investigations Header -->
+      <div class="section-header mb-16">
+        <div>
+          <div class="section-title">Investigation Cases</div>
+          <div class="section-subtitle">All open, active, and closed investigation cases managed by this team</div>
+        </div>
+        <button class="btn btn-primary" onclick="showToast('New investigation case created (Demo)', 'success')">
+          + New Case
+        </button>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="alerts-quick-stats mb-16" id="inv-stats"></div>
+
+      <!-- Filters -->
+      <div class="alerts-toolbar mb-16">
+        <div class="search-wrap">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" style="color:var(--text-muted);flex-shrink:0;">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <input type="text" id="inv-search" placeholder="Search cases, assignees…" oninput="filterInvestigations()" />
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Status:</span>
+          <select id="inv-status-filter" class="filter-select" onchange="filterInvestigations()">
+            <option value="">All</option>
+            <option value="Open">Open</option>
+            <option value="In Review">In Review</option>
+            <option value="Escalated">Escalated</option>
+            <option value="Monitoring">Monitoring</option>
+            <option value="Closed">Closed</option>
+          </select>
+          <span class="filter-label">Risk:</span>
+          <select id="inv-risk-filter" class="filter-select" onchange="filterInvestigations()">
+            <option value="">All</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Investigations Table -->
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Case ID</th>
+              <th>Alert ID</th>
+              <th>Account</th>
+              <th>Risk Level</th>
+              <th>Assigned Investigator</th>
+              <th>Status</th>
+              <th>Last Updated</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="investigations-tbody"></tbody>
+        </table>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="../js/app.js"></script>
+<script>
+// ─── Synthetic Investigation Data ──────────────────────────────
+// Future: GET /api/investigations
+
+const INVESTIGATIONS = [
+  { caseId:'INV-001', alertId:'A001', account:'ACC-8821', name:'Rajesh K.',    risk:'CRITICAL', assignee:'Siddharth A.', status:'Open',       updated:'2024-01-16 02:31' },
+  { caseId:'INV-002', alertId:'A002', account:'ACC-3345', name:'Priya M.',     risk:'CRITICAL', assignee:'Pooja N.',     status:'In Review',  updated:'2024-01-15 23:55' },
+  { caseId:'INV-003', alertId:'A003', account:'ACC-6677', name:'Arjun S.',     risk:'CRITICAL', assignee:'Vikram S.',    status:'Escalated',  updated:'2024-01-16 01:10' },
+  { caseId:'INV-004', alertId:'A004', account:'ACC-1129', name:'Nisha P.',     risk:'CRITICAL', assignee:'Siddharth A.', status:'Open',       updated:'2024-01-16 01:32' },
+  { caseId:'INV-005', alertId:'A005', account:'ACC-5512', name:'Karan V.',     risk:'CRITICAL', assignee:'Rekha T.',     status:'Open',       updated:'2024-01-16 04:21' },
+  { caseId:'INV-006', alertId:'A006', account:'ACC-2233', name:'Deepa L.',     risk:'HIGH',     assignee:'Ajay K.',      status:'In Review',  updated:'2024-01-15 15:00' },
+  { caseId:'INV-007', alertId:'A007', account:'ACC-4455', name:'Manoj T.',     risk:'HIGH',     assignee:'Pooja N.',     status:'Monitoring', updated:'2024-01-15 10:00' },
+  { caseId:'INV-008', alertId:'A008', account:'ACC-7788', name:'Ankur J.',     risk:'HIGH',     assignee:'Vikram S.',    status:'Monitoring', updated:'2024-01-15 17:20' },
+  { caseId:'INV-009', alertId:'A009', account:'ACC-9910', name:'Ritu B.',      risk:'HIGH',     assignee:'Rekha T.',     status:'Closed',     updated:'2024-01-14 12:00' },
+  { caseId:'INV-010', alertId:'A010', account:'ACC-1122', name:'Sunita R.',    risk:'HIGH',     assignee:'Ajay K.',      status:'Open',       updated:'2024-01-14 20:30' },
+  { caseId:'INV-011', alertId:'A011', account:'ACC-3366', name:'Vivek A.',     risk:'MEDIUM',   assignee:'Siddharth A.', status:'Open',       updated:'2024-01-14 09:00' },
+  { caseId:'INV-012', alertId:'A012', account:'ACC-5544', name:'Pooja N.',     risk:'MEDIUM',   assignee:'Rekha T.',     status:'In Review',  updated:'2024-01-13 16:00' },
+  { caseId:'INV-013', alertId:'A015', account:'ACC-0011', name:'Harish P.',    risk:'MEDIUM',   assignee:'Vikram S.',    status:'Closed',     updated:'2024-01-12 23:00' },
+  { caseId:'INV-014', alertId:'A016', account:'ACC-2255', name:'Meena S.',     risk:'LOW',      assignee:'Ajay K.',      status:'Closed',     updated:'2024-01-12 11:00' },
+  { caseId:'INV-015', alertId:'A017', account:'ACC-4477', name:'Rohit G.',     risk:'LOW',      assignee:'Pooja N.',     status:'Closed',     updated:'2024-01-11 17:00' },
+];
+
+let filteredInvestigations = [...INVESTIGATIONS];
+
+function filterInvestigations() {
+  const query  = (document.getElementById('inv-search')?.value || '').toLowerCase();
+  const status = document.getElementById('inv-status-filter')?.value || '';
+  const risk   = document.getElementById('inv-risk-filter')?.value || '';
+
+  filteredInvestigations = INVESTIGATIONS.filter(inv => {
+    const matchSearch = !query ||
+      inv.caseId.toLowerCase().includes(query) ||
+      inv.alertId.toLowerCase().includes(query) ||
+      inv.name.toLowerCase().includes(query) ||
+      inv.assignee.toLowerCase().includes(query);
+    const matchStatus = !status || inv.status === status;
+    const matchRisk   = !risk   || inv.risk === risk;
+    return matchSearch && matchStatus && matchRisk;
+  });
+
+  renderInvestigationsTable();
+}
+
+function renderInvestigationsTable() {
+  const tbody = document.getElementById('investigations-tbody');
+  if (!tbody) return;
+
+  if (filteredInvestigations.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><p>No investigations match your filters.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filteredInvestigations.map(inv => {
+    const timeStr = new Date(inv.updated).toLocaleString('en-IN', {
+      day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', hour12:true
+    });
+    return `
+      <tr>
+        <td style="font-family:monospace;font-weight:700;color:var(--accent-hover);">${inv.caseId}</td>
+        <td>
+          <a href="alert-details.html?id=${inv.alertId}" style="color:var(--accent);font-family:monospace;">${inv.alertId}</a>
+        </td>
+        <td>
+          <div style="font-weight:600;font-size:13px;">${inv.name}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${inv.account}</div>
+        </td>
+        <td>${updateRiskBadge(inv.risk)}</td>
+        <td style="font-size:13px;color:var(--text-secondary);">${inv.assignee}</td>
+        <td>${statusBadge(inv.status)}</td>
+        <td style="font-size:12px;color:var(--text-muted);">${timeStr}</td>
+        <td>
+          <div style="display:flex;gap:5px;">
+            <a href="alert-details.html?id=${inv.alertId}" class="btn btn-sm btn-primary">Review</a>
+            <button class="btn btn-sm btn-secondary" onclick="showToast('Investigation ${inv.caseId} status updated (Demo)', 'info')">Update</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderInvStats() {
+  const open      = INVESTIGATIONS.filter(i => i.status === 'Open').length;
+  const inReview  = INVESTIGATIONS.filter(i => i.status === 'In Review').length;
+  const escalated = INVESTIGATIONS.filter(i => i.status === 'Escalated').length;
+  const closed    = INVESTIGATIONS.filter(i => i.status === 'Closed').length;
+
+  document.getElementById('inv-stats').innerHTML = `
+    <div class="quick-stat">
+      <div class="quick-stat-icon" style="background:rgba(59,130,246,0.12);">📋</div>
+      <div><div class="quick-stat-val">${INVESTIGATIONS.length}</div><div class="quick-stat-lbl">Total Cases</div></div>
+    </div>
+    <div class="quick-stat">
+      <div class="quick-stat-icon" style="background:var(--risk-critical-bg);">🔴</div>
+      <div><div class="quick-stat-val" style="color:var(--risk-critical);">${open}</div><div class="quick-stat-lbl">Open</div></div>
+    </div>
+    <div class="quick-stat">
+      <div class="quick-stat-icon" style="background:rgba(245,158,11,0.12);">🟡</div>
+      <div><div class="quick-stat-val" style="color:var(--risk-medium);">${inReview + escalated}</div><div class="quick-stat-lbl">In Progress</div></div>
+    </div>
+    <div class="quick-stat">
+      <div class="quick-stat-icon" style="background:rgba(34,197,94,0.12);">✅</div>
+      <div><div class="quick-stat-val" style="color:var(--risk-low);">${closed}</div><div class="quick-stat-lbl">Closed</div></div>
+    </div>
+  `;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildSidebar('investigations', '../');
+  buildTopbar('Investigations', false);
+  renderInvStats();
+  filterInvestigations();
+});
+</script>
+</body>
+</html>

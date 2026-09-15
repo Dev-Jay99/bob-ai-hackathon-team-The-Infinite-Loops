@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FinGuard — Investigation Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar"></aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <header id="topbar" class="topbar"></header>
+
+    <!-- Page Body -->
+    <main class="page-body">
+
+      <!-- Stat Cards -->
+      <div id="stat-cards" class="stat-cards"></div>
+
+      <!-- Row 1: Trend + Distribution -->
+      <div class="dashboard-grid mb-24">
+
+        <!-- Alert Trend -->
+        <div class="chart-container">
+          <div class="chart-title">Alert Trend — Last 7 Days</div>
+          <div class="chart-subtitle">Daily alert volume by risk level</div>
+          <div id="alert-trend-chart"></div>
+        </div>
+
+        <!-- Risk Distribution -->
+        <div class="chart-container">
+          <div class="chart-title">Risk Distribution</div>
+          <div class="chart-subtitle">Current open alerts by level</div>
+          <div id="risk-distribution-chart"></div>
+        </div>
+
+      </div>
+
+      <!-- Row 2: Recent Critical Alerts -->
+      <div class="mb-24">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Recent Critical Alerts</div>
+            <div class="section-subtitle">Latest CRITICAL priority alerts requiring immediate review</div>
+          </div>
+          <a href="pages/alerts.html" class="btn btn-secondary btn-sm">View All Alerts →</a>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Alert ID</th>
+                <th>Account Holder</th>
+                <th>Amount</th>
+                <th>Risk Score</th>
+                <th>Risk Level</th>
+                <th>Location</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="recent-alerts-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Row 3: Accounts + Workload + Activity -->
+      <div class="dashboard-grid">
+
+        <!-- Suspicious Accounts -->
+        <div class="card">
+          <div class="section-header mb-16">
+            <div class="section-title">Suspicious Accounts</div>
+            <a href="pages/network.html" class="btn btn-secondary btn-sm">Network →</a>
+          </div>
+          <div id="suspicious-accounts" class="account-list"></div>
+        </div>
+
+        <!-- Right column: Workload + Activity -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <!-- Investigator Workload -->
+          <div class="card">
+            <div class="section-title mb-16">Investigator Workload</div>
+            <div id="investigator-workload" class="workload-list"></div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="card">
+            <div class="section-title mb-16">Recent Activity</div>
+            <div id="activity-feed" class="activity-feed"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="toast-container"></div>
+
+<script src="js/app.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

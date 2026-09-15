@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinGuard — AI Investigation Copilot</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/details.css" />
+  <style>
+    .copilot-page-layout {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 20px;
+      height: calc(100vh - var(--topbar-height) - 80px);
+    }
+
+    .copilot-full {
+      display: flex; flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      height: 100%;
+      min-height: 500px;
+    }
+
+    .copilot-full .copilot-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    .copilot-full .copilot-input-area {
+      border-top: 1px solid var(--border);
+      padding: 12px 14px;
+      display: flex; gap: 8px; align-items: flex-end;
+    }
+
+    .copilot-full .copilot-input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: var(--font);
+      outline: none;
+      resize: none;
+      min-height: 40px; max-height: 100px;
+    }
+
+    .copilot-full .copilot-input:focus { border-color: var(--accent); }
+
+    .side-panel { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+
+    .context-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .copilot-page-layout { grid-template-columns: 1fr; }
+      .side-panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside id="sidebar" class="sidebar"></aside>
+
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+
+    <main class="page-body">
+
+      <!-- Header row -->
+      <div class="section-header mb-16">
+        <div>
+          <div class="section-title">AI Investigation Copilot</div>
+          <div class="section-subtitle">AI-assisted fraud and AML investigation assistant — Loaded: Alert A001</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:11px;background:rgba(34,197,94,0.12);color:var(--risk-low);border:1px solid rgba(34,197,94,0.25);border-radius:4px;padding:3px 8px;font-weight:600;">
+            ● Active Session
+          </span>
+          <span style="font-size:11px;background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);border-radius:4px;padding:3px 8px;">
+            DEMO MODE
+          </span>
+          <button class="btn btn-secondary btn-sm" onclick="clearChat()">Clear Chat</button>
+          <button class="btn btn-primary btn-sm" onclick="exportAISummary()">Export Summary</button>
+        </div>
+      </div>
+
+      <!-- Layout -->
+      <div class="copilot-page-layout">
+
+        <!-- Main Chat -->
+        <div class="copilot-full">
+
+          <!-- Header -->
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+            <div class="copilot-indicator"></div>
+            <span style="font-size:14px;font-weight:700;color:var(--text-primary);">FinGuard AI Copilot</span>
+            <span style="font-size:11px;color:var(--text-muted);">Fraud & AML Investigation Assistant</span>
+            <span style="margin-left:auto;font-size:11px;color:var(--text-muted);font-style:italic;">
+              Demo AI — connect LLM API for production
+            </span>
+          </div>
+
+          <!-- Messages -->
+          <div id="copilot-messages" class="copilot-messages"></div>
+
+          <!-- Demo label -->
+          <div class="demo-label">
+            ⚠ Demo AI response — predefined responses only. Connect backend/LLM API for production intelligence.
+          </div>
+
+          <!-- Suggested questions -->
+          <div id="suggested-questions" class="suggested-qs"></div>
+
+          <!-- Input -->
+          <div class="copilot-input-area">
+            <textarea id="copilot-input" class="copilot-input" rows="1"
+                      placeholder="Ask the AI Copilot about the investigation…"></textarea>
+            <button class="copilot-send" onclick="sendCopilotMessage()">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="side-panel">
+
+          <!-- Case Context -->
+          <div class="context-card">
+            <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px;">Active Case</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+              <div style="width:40px;height:40px;background:var(--risk-critical-bg);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--risk-critical);">A001</div>
+              <div>
+                <div style="font-size:14px;font-weight:700;color:var(--text-primary);">Alert A001</div>
+                <div style="font-size:11px;color:var(--text-muted);">ACC-8821 · Rajesh K.</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text-secondary);">
+              <div style="display:flex;justify-content:space-between;"><span>Risk Score</span><span style="font-weight:800;color:var(--risk-critical);">94/100</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Risk Level</span><span class="risk-badge risk-critical" style="font-size:10px;">CRITICAL</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Transactions</span><span style="font-weight:600;">3 suspicious</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Total Amount</span><span style="font-weight:700;color:var(--risk-critical);">₹1,72,000</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Location</span><span>Mumbai</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Time</span><span>02:15–02:17 AM</span></div>
+            </div>
+            <a href="alert-details.html?id=A001" class="btn btn-secondary btn-sm" style="margin-top:12px;width:100%;">Open Alert Details</a>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="context-card">
+            <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px;">Quick Prompts</div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <button class="btn btn-secondary btn-sm" style="text-align:left;justify-content:flex-start;" onclick="askSuggested('why is this transaction critical')">Why is this critical?</button>
+              <button class="btn btn-secondary btn-sm" style="text-align:left;justify-content:flex-start;" onclick="askSuggested('unusual compared with account history')">Unusual vs history?</button>
+              <button class="btn btn-secondary btn-sm" style="text-align:left;justify-content:flex-start;" onclick="askSuggested('last 10 transactions')">Last 10 transactions</button>
+              <button class="btn btn-secondary btn-sm" style="text-align:left;justify-content:flex-start;" onclick="askSuggested('explain the network')">Explain the network</button>
+              <button class="btn btn-secondary btn-sm" style="text-align:left;justify-content:flex-start;" onclick="askSuggested('risk factors contributed most')">Top risk factors?</button>
+              <button class="btn btn-secondary btn-sm" style="text-align:left;justify-content:flex-start;" onclick="askSuggested('summarize this case')">Summarize this case</button>
+              <button class="btn btn-secondary btn-sm" style="text-align:left;justify-content:flex-start;" onclick="askSuggested('what evidence should i review next')">Next review steps?</button>
+            </div>
+          </div>
+
+          <!-- AI Capabilities -->
+          <div class="context-card">
+            <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px;">AI Capabilities</div>
+            <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text-secondary);">
+              <div>✅ Risk factor explanation</div>
+              <div>✅ Transaction comparison</div>
+              <div>✅ Network analysis summary</div>
+              <div>✅ Investigation brief generation</div>
+              <div>✅ Suggested review steps</div>
+              <div style="color:var(--text-muted);">⬜ Real LLM reasoning (needs backend)</div>
+              <div style="color:var(--text-muted);">⬜ Live transaction data (needs API)</div>
+            </div>
+          </div>
+
+          <!-- Future API Note -->
+          <div style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);border-radius:var(--radius);padding:12px;font-size:11px;color:var(--text-muted);">
+            <strong style="color:var(--accent-hover);">Production Integration:</strong><br>
+            Connect to POST /api/copilot/chat for real LLM responses. Responses are currently predefined for demo purposes.
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="../js/app.js"></script>
+<script src="../js/copilot.js"></script>
+</body>
+</html>

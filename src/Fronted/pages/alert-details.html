@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinGuard — Alert Investigation</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/details.css" />
+</head>
+<body>
+<div class="app-layout">
+
+  <aside id="sidebar" class="sidebar"></aside>
+
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+
+    <main class="page-body">
+
+      <!-- Back link -->
+      <div style="margin-bottom:14px;">
+        <a href="alerts.html" style="font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
+          ← Back to Alerts
+        </a>
+      </div>
+
+      <!-- Case Header -->
+      <div id="case-header" class="case-header"></div>
+
+      <!-- Alert Summary Banner -->
+      <div id="alert-summary-banner" style="
+        background:rgba(239,68,68,0.07);
+        border:1px solid rgba(239,68,68,0.25);
+        border-radius:var(--radius);
+        padding:12px 18px;
+        margin-bottom:20px;
+        font-size:13px;
+        color:var(--text-secondary);
+        display:flex;align-items:center;gap:10px;
+      ">
+        <span style="font-size:18px;">⚠</span>
+        <span id="alert-summary-text">Loading alert summary…</span>
+      </div>
+
+      <!-- Main Details Grid -->
+      <div class="details-grid">
+
+        <!-- Left / Main Column -->
+        <div class="details-main">
+
+          <!-- Suspicious Transactions -->
+          <div class="card">
+            <div class="section-header mb-16">
+              <div>
+                <div class="section-title">Suspicious Transactions</div>
+                <div class="section-subtitle">Flagged transactions from this alert event</div>
+              </div>
+              <span class="risk-badge risk-critical">CRITICAL PATTERN</span>
+            </div>
+            <div id="sus-tx-list" class="sus-tx-list"></div>
+          </div>
+
+          <!-- Risk Factors -->
+          <div class="card">
+            <div class="section-header mb-16">
+              <div>
+                <div class="section-title">Risk Factor Analysis</div>
+                <div class="section-subtitle">AI-assisted scoring — weighted risk breakdown</div>
+              </div>
+            </div>
+            <div id="risk-factors-grid" class="risk-factors-grid"></div>
+          </div>
+
+          <!-- Account History -->
+          <div class="card">
+            <div class="section-title mb-16">Account History vs Suspicious Activity</div>
+            <div id="account-history"></div>
+          </div>
+
+          <!-- Recent Transaction History -->
+          <div class="card">
+            <div class="section-header mb-16">
+              <div class="section-title">Recent Transaction History</div>
+              <div class="section-subtitle">Last 10 transactions on this account</div>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Location</th>
+                    <th>Device</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-tx-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- AI Copilot Panel -->
+          <div class="card" style="padding:0;overflow:hidden;">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+              <div class="copilot-indicator"></div>
+              <div>
+                <div style="font-size:14px;font-weight:700;color:var(--text-primary);">AI Investigation Copilot</div>
+                <div style="font-size:11px;color:var(--text-muted);">Ask questions about this alert — AI-assisted analysis</div>
+              </div>
+              <span style="margin-left:auto;font-size:10px;background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);border-radius:4px;padding:2px 8px;">DEMO MODE</span>
+            </div>
+
+            <!-- Suggested Questions -->
+            <div class="suggested-qs">
+              <button class="suggested-q" onclick="useSuggestedQuestion('Why is this transaction critical?')">Why critical?</button>
+              <button class="suggested-q" onclick="useSuggestedQuestion('unusual compared with account history')">Unusual vs history?</button>
+              <button class="suggested-q" onclick="useSuggestedQuestion('last 10 transactions')">Last 10 txns</button>
+              <button class="suggested-q" onclick="useSuggestedQuestion('explain the network')">Network?</button>
+              <button class="suggested-q" onclick="useSuggestedQuestion('risk factors contributed most')">Top risk factors?</button>
+              <button class="suggested-q" onclick="useSuggestedQuestion('summarize this case')">Summarize case</button>
+              <button class="suggested-q" onclick="useSuggestedQuestion('what evidence should I review next')">Next steps?</button>
+            </div>
+
+            <div id="detail-copilot-messages" class="copilot-messages" style="height:260px;"></div>
+            <div class="demo-label">Demo AI response — connect backend/LLM API for production use.</div>
+            <div class="copilot-input-area">
+              <textarea id="detail-copilot-input" class="copilot-input" rows="1"
+                        placeholder="Ask the AI Copilot about this alert…"></textarea>
+              <button class="copilot-send" onclick="sendDetailCopilotMessage()">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right / Sidebar Column -->
+        <div class="details-side">
+
+          <!-- Network Connections -->
+          <div class="card">
+            <div class="section-header mb-16">
+              <div class="section-title">Network Connections</div>
+              <a href="network.html" class="btn btn-secondary btn-sm">Full View →</a>
+            </div>
+            <div id="network-connections" class="network-mini-nodes"></div>
+            <div style="margin-top:10px;font-size:11px;color:var(--text-muted);font-style:italic;">
+              ℹ Connected accounts require independent investigation. Connection ≠ guilt.
+            </div>
+          </div>
+
+          <!-- Investigation Actions -->
+          <div class="investigation-actions">
+            <div class="section-title mb-16">Investigator Decision</div>
+            <div class="action-buttons-row">
+              <button class="action-btn action-escalate" onclick="handleAction('escalate')">
+                <span class="action-btn-title">↑ Escalate</span>
+                <span class="action-btn-desc">Escalate to compliance / senior investigator</span>
+              </button>
+              <button class="action-btn action-monitor" onclick="handleAction('monitor')">
+                <span class="action-btn-title">👁 Monitor</span>
+                <span class="action-btn-desc">Place under active monitoring</span>
+              </button>
+              <button class="action-btn action-legitimate" onclick="handleAction('legitimate')">
+                <span class="action-btn-title">✓ Legitimate</span>
+                <span class="action-btn-desc">Mark as legitimate after review</span>
+              </button>
+              <button class="action-btn action-notes" onclick="document.getElementById('notes-input').focus()">
+                <span class="action-btn-title">✏ Add Note</span>
+                <span class="action-btn-desc">Add investigation note</span>
+              </button>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-bottom:10px;">
+              ⚠ Demo actions only. Final decision recorded in audit trail.
+            </div>
+            <textarea id="notes-input" class="notes-area" placeholder="Add investigation notes, observations, or references…"></textarea>
+            <button class="btn btn-primary w-full" onclick="handleAddNote()">Save Note</button>
+          </div>
+
+          <!-- Audit Trail -->
+          <div class="audit-trail">
+            <div class="section-title mb-16">Investigation Audit Trail</div>
+            <div id="audit-list" class="audit-list"></div>
+          </div>
+
+          <!-- Generate Report -->
+          <div class="card" style="text-align:center;padding:20px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Generate Investigation Brief</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Create a formal investigation report for this alert</div>
+            <a href="reports.html?id=A001" class="btn btn-primary w-full">📄 Generate Report</a>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="../js/app.js"></script>
+<script src="../js/details.js"></script>
+<script>
+  // Inject summary banner text after alert loads
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      const alertId = getQueryParam('id') || 'A001';
+      const alert = ALERTS_DATA[alertId];
+      const banner = document.getElementById('alert-summary-text');
+      if (alert && banner) {
+        banner.textContent = alert.summary || 'Alert details loaded.';
+      }
+    }, 100);
+  });
+</script>
+</body>
+</html>

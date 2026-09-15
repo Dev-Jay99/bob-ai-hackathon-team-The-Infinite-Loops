@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinGuard — Settings</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .settings-nav {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 0;
+    }
+    .settings-nav-item {
+      padding: 9px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .settings-nav-item:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+    .settings-nav-item.active { background: rgba(59,130,246,0.08); color: var(--accent-hover); border-left-color: var(--accent); }
+    .settings-section { display: none; }
+    .settings-section.active { display: block; }
+    .settings-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+    .settings-card-title {
+      font-size: 14px; font-weight: 700; color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .settings-card-desc {
+      font-size: 12px; color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .setting-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .setting-desc  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    /* Toggle switch */
+    .toggle-wrap { position: relative; display: inline-block; width: 40px; height: 22px; cursor: pointer; }
+    .toggle-wrap input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      width: 16px; height: 16px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      top: 2px; left: 2px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .toggle-wrap input:checked + .toggle-slider { background: rgba(59,130,246,0.3); border-color: var(--accent); }
+    .toggle-wrap input:checked + .toggle-slider::before { transform: translateX(18px); background: var(--accent); }
+    @media (max-width: 768px) {
+      .settings-layout { grid-template-columns: 1fr; }
+      .settings-nav { display: flex; overflow-x: auto; padding: 0; }
+      .settings-nav-item { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside id="sidebar" class="sidebar"></aside>
+
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+
+    <main class="page-body">
+
+      <div class="section-header mb-20">
+        <div class="section-title">Settings</div>
+      </div>
+
+      <div class="settings-layout">
+
+        <!-- Settings Nav -->
+        <div class="settings-nav">
+          <div class="settings-nav-item active" onclick="switchSection('profile')">👤 Profile</div>
+          <div class="settings-nav-item" onclick="switchSection('notifications')">🔔 Notifications</div>
+          <div class="settings-nav-item" onclick="switchSection('thresholds')">📊 Risk Thresholds</div>
+          <div class="settings-nav-item" onclick="switchSection('theme')">🎨 Appearance</div>
+          <div class="settings-nav-item" onclick="switchSection('demo')">🛠 Demo Mode</div>
+          <div class="settings-nav-item" onclick="switchSection('api')">🔌 API Integration</div>
+        </div>
+
+        <!-- Settings Panels -->
+        <div>
+
+          <!-- Profile -->
+          <div id="section-profile" class="settings-section active">
+            <div class="settings-card">
+              <div class="settings-card-title">Investigator Profile</div>
+              <div class="settings-card-desc">Your investigator identity used across the platform.</div>
+
+              <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);">
+                <div style="width:52px;height:52px;border-radius:50%;background:var(--accent-dark);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;">SA</div>
+                <div>
+                  <div style="font-size:15px;font-weight:700;color:var(--text-primary);">Siddharth A.</div>
+                  <div style="font-size:12px;color:var(--text-muted);">Sr. Investigator — Fraud & AML Unit</div>
+                  <div style="font-size:11px;color:var(--accent);margin-top:2px;">siddharth.a@finguard.internal</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" style="margin-left:auto;" onclick="showToast('Profile edit (Demo — no backend)', 'info')">Edit Photo</button>
+              </div>
+
+              <div class="grid-2 gap-16" style="margin-bottom:14px;">
+                <div class="form-group">
+                  <label class="form-label">First Name</label>
+                  <input class="form-control" value="Siddharth" id="pf-first" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Last Name</label>
+                  <input class="form-control" value="A." id="pf-last" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <input class="form-control" value="siddharth.a@finguard.internal" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Employee ID</label>
+                  <input class="form-control" value="EMP-20240012" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Department</label>
+                  <input class="form-control" value="Fraud & AML Investigation Unit" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Role</label>
+                  <select class="form-control">
+                    <option selected>Sr. Investigator</option>
+                    <option>Investigator</option>
+                    <option>Team Lead</option>
+                    <option>Compliance Officer</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+              <button class="btn btn-secondary" style="margin-left:8px;" onclick="showToast('No changes made.', 'info')">Cancel</button>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-title">Security</div>
+              <div class="settings-card-desc">Manage authentication and session security.</div>
+              <div class="setting-row">
+                <div><div class="setting-label">Two-Factor Authentication</div><div class="setting-desc">Require 2FA for all logins</div></div>
+                <label class="toggle-wrap"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-label">Session Timeout</div><div class="setting-desc">Auto-logout after inactivity</div></div>
+                <select class="form-control" style="width:120px;"><option>30 minutes</option><option>1 hour</option><option>4 hours</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div id="section-notifications" class="settings-section">
+            <div class="settings-card">
+              <div class="settings-card-title">Notification Preferences</div>
+              <div class="settings-card-desc">Configure when and how you receive investigation alerts.</div>
+              <div class="setting-row">
+                <div><div class="setting-label">Critical Alert Notifications</div><div class="setting-desc">Immediate push for CRITICAL alerts</div></div>
+                <label class="toggle-wrap"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-label">High Alert Notifications</div><div class="setting-desc">Notify for HIGH risk alerts</div></div>
+                <label class="toggle-wrap"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-label">Medium Alert Notifications</div><div class="setting-desc">Notify for MEDIUM risk alerts</div></div>
+                <label class="toggle-wrap"><input type="checkbox" /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-label">Daily Summary Email</div><div class="setting-desc">Receive daily alert summary at 08:00 AM</div></div>
+                <label class="toggle-wrap"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-label">Case Assignment Alerts</div><div class="setting-desc">Notify when a new case is assigned to you</div></div>
+                <label class="toggle-wrap"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-label">Audit Trail Updates</div><div class="setting-desc">Notify on activity in your assigned cases</div></div>
+                <label class="toggle-wrap"><input type="checkbox" /><span class="toggle-slider"></span></label>
+              </div>
+              <div style="margin-top:14px;">
+                <button class="btn btn-primary" onclick="showToast('Notification preferences saved', 'success')">Save Preferences</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Risk Thresholds -->
+          <div id="section-thresholds" class="settings-section">
+            <div class="settings-card">
+              <div class="settings-card-title">Risk Score Thresholds</div>
+              <div class="settings-card-desc">Define score boundaries for each risk level. These thresholds control alert classification.</div>
+              <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+                <div style="display:grid;grid-template-columns:140px 100px 100px 1fr;align-items:center;gap:12px;padding:10px;background:var(--risk-low-bg);border:1px solid rgba(34,197,94,0.2);border-radius:6px;">
+                  <div style="display:flex;align-items:center;gap:6px;font-weight:600;">
+                    <span class="risk-badge risk-low">LOW</span>
+                  </div>
+                  <div><label class="form-label">Min Score</label><input class="form-control" value="0" type="number" /></div>
+                  <div><label class="form-label">Max Score</label><input class="form-control" value="30" type="number" /></div>
+                  <div style="font-size:12px;color:var(--text-muted);">Routine monitoring. No immediate action required.</div>
+                </div>
+                <div style="display:grid;grid-template-columns:140px 100px 100px 1fr;align-items:center;gap:12px;padding:10px;background:var(--risk-medium-bg);border:1px solid rgba(245,158,11,0.2);border-radius:6px;">
+                  <div><span class="risk-badge risk-medium">MEDIUM</span></div>
+                  <div><label class="form-label">Min Score</label><input class="form-control" value="31" type="number" /></div>
+                  <div><label class="form-label">Max Score</label><input class="form-control" value="60" type="number" /></div>
+                  <div style="font-size:12px;color:var(--text-muted);">Review required within 24 hours.</div>
+                </div>
+                <div style="display:grid;grid-template-columns:140px 100px 100px 1fr;align-items:center;gap:12px;padding:10px;background:var(--risk-high-bg);border:1px solid rgba(249,115,22,0.2);border-radius:6px;">
+                  <div><span class="risk-badge risk-high">HIGH</span></div>
+                  <div><label class="form-label">Min Score</label><input class="form-control" value="61" type="number" /></div>
+                  <div><label class="form-label">Max Score</label><input class="form-control" value="80" type="number" /></div>
+                  <div style="font-size:12px;color:var(--text-muted);">Priority review. Investigate within 4 hours.</div>
+                </div>
+                <div style="display:grid;grid-template-columns:140px 100px 100px 1fr;align-items:center;gap:12px;padding:10px;background:var(--risk-critical-bg);border:1px solid rgba(239,68,68,0.2);border-radius:6px;">
+                  <div><span class="risk-badge risk-critical">CRITICAL</span></div>
+                  <div><label class="form-label">Min Score</label><input class="form-control" value="81" type="number" /></div>
+                  <div><label class="form-label">Max Score</label><input class="form-control" value="100" type="number" /></div>
+                  <div style="font-size:12px;color:var(--text-muted);">Immediate escalation. Investigate within 1 hour.</div>
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="showToast('Risk thresholds saved (Demo)', 'success')">Save Thresholds</button>
+              <button class="btn btn-secondary" style="margin-left:8px;" onclick="showToast('Thresholds reset to defaults', 'info')">Reset Defaults</button>
+            </div>
+          </div>
+
+          <!-- Appearance -->
+          <div id="section-theme" class="settings-section">
+            <div class="settings-card">
+              <div class="settings-card-title">Appearance</div>
+              <div class="settings-card-desc">Customize the visual interface.</div>
+              <div class="setting-row">
+                <div><div class="setting-label">Theme</div><div class="setting-desc">Choose between dark and light mode</div></div>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-primary btn-sm" onclick="showToast('Dark mode is default (Demo)', 'info')">Dark Mode</button>
+                  <button class="btn btn-secondary btn-sm" onclick="showToast('Light mode coming in v2 (Demo)', 'info')">Light Mode</button>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-label">Sidebar Collapsed</div><div class="setting-desc">Start with a compact sidebar</div></div>
+                <label class="toggle-wrap"><input type="checkbox" /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-label">Dense Tables</div><div class="setting-desc">Compact row height for data tables</div></div>
+                <label class="toggle-wrap"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-label">Language</div><div class="setting-desc">Interface language</div></div>
+                <select class="form-control" style="width:130px;"><option>English (IN)</option><option>Hindi</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Demo Mode -->
+          <div id="section-demo" class="settings-section">
+            <div class="settings-card" style="border-color:rgba(59,130,246,0.3);background:rgba(59,130,246,0.04);">
+              <div class="settings-card-title" style="color:var(--accent-hover);">🛠 Demo Data Mode</div>
+              <div class="settings-card-desc">This installation uses synthetic demonstration data. No real customer or banking information.</div>
+              <div class="setting-row">
+                <div><div class="setting-label">Demo Mode</div><div class="setting-desc">All data is synthetic — no real information</div></div>
+                <label class="toggle-wrap"><input type="checkbox" checked disabled /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-label">AI Copilot Mode</div><div class="setting-desc">Currently using predefined demo responses</div></div>
+                <span style="font-size:12px;color:var(--text-muted);">DEMO (predefined)</span>
+              </div>
+              <div style="margin-top:14px;padding:12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text-secondary);line-height:1.6;">
+                <strong>To connect a real backend:</strong><br>
+                Replace demo data in <code style="background:var(--bg-card);padding:1px 4px;border-radius:3px;">js/</code> files with
+                <code style="background:var(--bg-card);padding:1px 4px;border-radius:3px;">fetch()</code> calls to the documented REST APIs.
+                See API-ready comments in each JS file for endpoint reference.
+              </div>
+              <div style="margin-top:10px;">
+                <button class="btn btn-secondary" onclick="clearAllDemoData()">🗑 Clear Demo LocalStorage Data</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- API Integration -->
+          <div id="section-api" class="settings-section">
+            <div class="settings-card">
+              <div class="settings-card-title">API Integration Reference</div>
+              <div class="settings-card-desc">FinGuard is designed for backend integration. Replace demo data with these API endpoints.</div>
+              <div style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;">
+                <div style="padding:8px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;font-family:monospace;display:flex;gap:10px;">
+                  <span style="color:var(--risk-low);font-weight:700;">GET</span>
+                  <span style="color:var(--text-primary);">/api/alerts</span>
+                  <span style="color:var(--text-muted);margin-left:auto;">List all alerts</span>
+                </div>
+                <div style="padding:8px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;font-family:monospace;display:flex;gap:10px;">
+                  <span style="color:var(--risk-low);font-weight:700;">GET</span>
+                  <span style="color:var(--text-primary);">/api/alerts/{alert_id}</span>
+                  <span style="color:var(--text-muted);margin-left:auto;">Alert details</span>
+                </div>
+                <div style="padding:8px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;font-family:monospace;display:flex;gap:10px;">
+                  <span style="color:var(--risk-low);font-weight:700;">GET</span>
+                  <span style="color:var(--text-primary);">/api/accounts/{id}/network</span>
+                  <span style="color:var(--text-muted);margin-left:auto;">Account network</span>
+                </div>
+                <div style="padding:8px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;font-family:monospace;display:flex;gap:10px;">
+                  <span style="color:var(--risk-medium);font-weight:700;">POST</span>
+                  <span style="color:var(--text-primary);">/api/copilot/chat</span>
+                  <span style="color:var(--text-muted);margin-left:auto;">AI Copilot LLM</span>
+                </div>
+                <div style="padding:8px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;font-family:monospace;display:flex;gap:10px;">
+                  <span style="color:var(--risk-medium);font-weight:700;">POST</span>
+                  <span style="color:var(--text-primary);">/api/reports/investigation</span>
+                  <span style="color:var(--text-muted);margin-left:auto;">Report generation</span>
+                </div>
+                <div style="padding:8px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;font-family:monospace;display:flex;gap:10px;">
+                  <span style="color:var(--risk-medium);font-weight:700;">POST</span>
+                  <span style="color:var(--text-primary);">/api/investigations/{id}/escalate</span>
+                  <span style="color:var(--text-muted);margin-left:auto;">Escalate case</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="../js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  buildSidebar('settings', '../');
+  buildTopbar('Settings', false);
+});
+
+function switchSection(name) {
+  document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
+  const section = document.getElementById('section-' + name);
+  if (section) section.classList.add('active');
+  // Find the nav item that matches
+  document.querySelectorAll('.settings-nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes(`'${name}'`)) n.classList.add('active');
+  });
+}
+
+function saveProfile() {
+  const first = document.getElementById('pf-first')?.value || 'Siddharth';
+  const last  = document.getElementById('pf-last')?.value  || 'A.';
+  localStorage.setItem('fg_investigator_name', first + ' ' + last);
+  showToast('Profile saved: ' + first + ' ' + last, 'success');
+}
+
+function clearAllDemoData() {
+  showConfirm('Clear Demo Data', 'This will remove all saved notes, decisions, and audit trails from localStorage. Demo data will reload on next visit.', () => {
+    Object.keys(localStorage).filter(k => k.startsWith('fg_')).forEach(k => localStorage.removeItem(k));
+    showToast('All FinGuard demo data cleared.', 'success');
+  }, 'warning');
+}
+</script>
+</body>
+</html>

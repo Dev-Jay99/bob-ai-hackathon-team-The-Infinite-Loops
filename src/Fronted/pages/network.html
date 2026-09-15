@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinGuard — Account Network</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/details.css" />
+  <style>
+    .network-page-layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 20px;
+      align-items: start;
+    }
+    .network-filter-btn {
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .network-filter-btn:hover { background: var(--bg-card-hover); }
+    .network-filter-btn.active { background: rgba(59,130,246,0.12); border-color: var(--accent); color: var(--accent-hover); }
+    .network-legend { display: flex; gap: 12px; flex-wrap: wrap; }
+    .legend-entry { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+    .legend-entry .dot { width: 10px; height: 10px; border-radius: 50%; }
+    @media (max-width: 900px) {
+      .network-page-layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside id="sidebar" class="sidebar"></aside>
+
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+
+    <main class="page-body">
+
+      <!-- Header -->
+      <div class="section-header mb-16">
+        <div>
+          <div class="section-title">Account Transaction Network</div>
+          <div class="section-subtitle">Visualizing connected accounts and suspicious money flows — click a node to inspect</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <a href="alert-details.html?id=A001" class="btn btn-secondary btn-sm">← Alert A001</a>
+          <button class="btn btn-primary btn-sm" onclick="showToast('Network exported as PNG', 'success')">Export</button>
+        </div>
+      </div>
+
+      <!-- Context Banner -->
+      <div style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);border-radius:var(--radius);padding:10px 16px;margin-bottom:16px;font-size:12.5px;color:var(--text-secondary);">
+        <strong style="color:var(--text-primary);">Viewing network for Alert A001</strong> — ACC-8821 (Rajesh K.) — CRITICAL Risk 94/100.
+        The dashed lines indicate suspicious fund flows. Connected accounts require independent review.
+        <strong>Connection does not imply criminal activity.</strong>
+      </div>
+
+      <!-- Filters + Legend -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;">Filter:</span>
+          <button class="network-filter-btn active" data-risk="all" onclick="filterNetwork('all')">All Nodes</button>
+          <button class="network-filter-btn" data-risk="critical" onclick="filterNetwork('critical')">Critical</button>
+          <button class="network-filter-btn" data-risk="high" onclick="filterNetwork('high')">High</button>
+          <button class="network-filter-btn" data-risk="medium" onclick="filterNetwork('medium')">Medium</button>
+          <button class="network-filter-btn" data-risk="low" onclick="filterNetwork('low')">Low</button>
+        </div>
+        <div class="network-legend">
+          <div class="legend-entry"><span class="dot" style="background:#3b82f6;"></span>Subject</div>
+          <div class="legend-entry"><span class="dot" style="background:#ef4444;"></span>Requires review</div>
+          <div class="legend-entry"><span class="dot" style="background:#f97316;"></span>Suspicious</div>
+          <div class="legend-entry"><span class="dot" style="background:#f59e0b;"></span>Transaction connection</div>
+          <div class="legend-entry"><span class="dot" style="background:#22c55e;"></span>Normal connection</div>
+        </div>
+      </div>
+
+      <!-- Network Layout -->
+      <div class="network-page-layout">
+
+        <!-- SVG Network Graph -->
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div id="network-svg-container" style="width:100%;min-height:480px;"></div>
+        </div>
+
+        <!-- Right Panel -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <!-- Node Details -->
+          <div class="card">
+            <div class="section-title mb-12">Node Details</div>
+            <div id="node-detail-panel" style="font-size:13px;color:var(--text-secondary);">
+              Click any node in the network graph to see details.
+            </div>
+          </div>
+
+          <!-- Node List -->
+          <div class="card">
+            <div class="section-title mb-12">Connected Accounts</div>
+            <div id="network-node-list" class="network-mini-nodes"></div>
+          </div>
+
+          <!-- Key Facts -->
+          <div class="card" style="background:var(--risk-critical-bg);border-color:rgba(239,68,68,0.25);">
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">Key Network Facts</div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--text-secondary);">
+              <div>📤 Total funds transferred: <strong style="color:var(--risk-critical);">₹1,72,000</strong></div>
+              <div>🔗 Direct connections: <strong>4 accounts</strong></div>
+              <div>⚠ Flagged connections: <strong>3 (requires review)</strong></div>
+              <div>🌐 Second-hop nodes: <strong>2 accounts</strong></div>
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:var(--text-muted);font-style:italic;">
+              ⚠ Relationships require investigator review. Flagged status ≠ criminal determination.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="../js/app.js"></script>
+<script src="../js/network.js"></script>
+</body>
+</html>

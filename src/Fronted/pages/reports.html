@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinGuard — Investigation Report</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .report-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+    .report-section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .report-section-title .section-num {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 4px;
+      padding: 1px 7px;
+    }
+    .report-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .report-key {
+      min-width: 200px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .report-val { color: var(--text-primary); flex: 1; }
+    .report-placeholder {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .report-ai-block {
+      background: rgba(59,130,246,0.05);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .report-evidence-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 8px 0; border-bottom: 1px solid var(--border-light);
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .report-evidence-item:last-child { border-bottom: none; }
+    .report-evidence-item .ev-num {
+      width: 22px; height: 22px; min-width: 22px;
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: var(--accent);
+    }
+    @media print {
+      .sidebar, .topbar, #generate-btn-wrap, .topbar-actions { display: none !important; }
+      .main-content { margin-left: 0 !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside id="sidebar" class="sidebar"></aside>
+
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+
+    <main class="page-body">
+
+      <!-- Page Header -->
+      <div class="section-header mb-20">
+        <div>
+          <div class="section-title">Investigation Report</div>
+          <div class="section-subtitle">Formal investigation brief — AI-assisted summary with investigator review</div>
+        </div>
+        <div id="generate-btn-wrap" style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="generateReport()">📄 Generate Investigation Brief</button>
+          <button class="btn btn-secondary" onclick="window.print()">🖨 Print Report</button>
+        </div>
+      </div>
+
+      <!-- Empty state before generation -->
+      <div id="report-empty" class="report-section" style="text-align:center;padding:48px;">
+        <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" style="color:var(--text-muted);opacity:0.4;margin:0 auto 12px;display:block;">
+          <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+        </svg>
+        <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">No Report Generated</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Click "Generate Investigation Brief" to create a formal report for Alert A001.</div>
+        <button class="btn btn-primary" onclick="generateReport()">📄 Generate Investigation Brief</button>
+      </div>
+
+      <!-- Report Content (hidden until generated) -->
+      <div id="report-content" style="display:none;">
+
+        <!-- Report Cover -->
+        <div class="report-section" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04);">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+            <div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:4px;">CONFIDENTIAL — INVESTIGATION REPORT</div>
+              <div style="font-size:22px;font-weight:800;color:var(--text-primary);line-height:1.2;">Case INV-001 / Alert A001</div>
+              <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Generated by FinGuard Investigation Copilot</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:28px;font-weight:900;color:var(--risk-critical);">94/100</div>
+              <div class="risk-badge risk-critical" style="margin-left:auto;">CRITICAL</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:4px;" id="report-generated-time"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1. Case Summary -->
+        <div class="report-section">
+          <div class="report-section-title"><span class="section-num">01</span> Case Summary</div>
+          <div class="report-row"><span class="report-key">Alert ID</span><span class="report-val">A001</span></div>
+          <div class="report-row"><span class="report-key">Case ID</span><span class="report-val">INV-001</span></div>
+          <div class="report-row"><span class="report-key">Subject Account</span><span class="report-val">ACC-8821 — Rajesh Kumar</span></div>
+          <div class="report-row"><span class="report-key">Account Type</span><span class="report-val">Savings Account (since Mar 2018)</span></div>
+          <div class="report-row"><span class="report-key">Alert Raised</span><span class="report-val">January 16, 2024 — 02:17 AM</span></div>
+          <div class="report-row"><span class="report-key">Assigned Investigator</span><span class="report-val">Siddharth A. (Sr. Investigator)</span></div>
+          <div class="report-row"><span class="report-key">Current Status</span><span class="report-val">Open — Awaiting Investigator Decision</span></div>
+          <div class="report-row"><span class="report-key">KYC Status</span><span class="report-val">Verified ✓</span></div>
+        </div>
+
+        <!-- 2. Risk Assessment -->
+        <div class="report-section">
+          <div class="report-section-title"><span class="section-num">02</span> Risk Assessment</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+            <div style="background:var(--risk-critical-bg);border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:12px;text-align:center;">
+              <div style="font-size:28px;font-weight:900;color:var(--risk-critical);">94</div>
+              <div style="font-size:11px;color:var(--text-muted);">Risk Score</div>
+            </div>
+            <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center;">
+              <div style="font-size:18px;font-weight:700;color:var(--text-primary);">CRITICAL</div>
+              <div style="font-size:11px;color:var(--text-muted);">Risk Level</div>
+            </div>
+            <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center;">
+              <div style="font-size:18px;font-weight:700;color:var(--risk-critical);">₹1,72,000</div>
+              <div style="font-size:11px;color:var(--text-muted);">Total Exposure</div>
+            </div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="background:var(--bg-surface);">
+              <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;border-bottom:1px solid var(--border);">Risk Factor</th>
+              <th style="text-align:center;padding:8px 12px;color:var(--text-muted);font-size:11px;border-bottom:1px solid var(--border);">Score</th>
+              <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;border-bottom:1px solid var(--border);">Detail</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-light);">
+                <td style="padding:8px 12px;font-weight:600;">Transaction Velocity</td>
+                <td style="padding:8px 12px;text-align:center;font-weight:800;color:var(--risk-critical);">20/20</td>
+                <td style="padding:8px 12px;color:var(--text-muted);">3 transactions in 3 minutes</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-light);">
+                <td style="padding:8px 12px;font-weight:600;">Amount Anomaly</td>
+                <td style="padding:8px 12px;text-align:center;font-weight:800;color:var(--risk-critical);">20/20</td>
+                <td style="padding:8px 12px;color:var(--text-muted);">₹42K–₹75K vs avg ₹3,200 (23×)</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-light);">
+                <td style="padding:8px 12px;font-weight:600;">Location Anomaly</td>
+                <td style="padding:8px 12px;text-align:center;font-weight:800;color:var(--risk-critical);">18/20</td>
+                <td style="padding:8px 12px;color:var(--text-muted);">Mumbai; account usual location: Ahmedabad</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-light);">
+                <td style="padding:8px 12px;font-weight:600;">New Device</td>
+                <td style="padding:8px 12px;text-align:center;font-weight:800;color:var(--risk-critical);">15/15</td>
+                <td style="padding:8px 12px;color:var(--text-muted);">First-ever iPhone; usual device: Samsung</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-light);">
+                <td style="padding:8px 12px;font-weight:600;">Unusual Time</td>
+                <td style="padding:8px 12px;text-align:center;font-weight:800;color:var(--risk-high);">12/15</td>
+                <td style="padding:8px 12px;color:var(--text-muted);">02:15 AM; normal hours: 8AM–10PM</td>
+              </tr>
+              <tr>
+                <td style="padding:8px 12px;font-weight:600;">Network Risk</td>
+                <td style="padding:8px 12px;text-align:center;font-weight:800;color:var(--risk-high);">9/10</td>
+                <td style="padding:8px 12px;color:var(--text-muted);">Recipient accounts previously flagged</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 3. Key Evidence -->
+        <div class="report-section">
+          <div class="report-section-title"><span class="section-num">03</span> Key Evidence</div>
+          <div>
+            <div class="report-evidence-item"><span class="ev-num">1</span><span>Three online transfers at 02:15, 02:16, 02:17 AM — totalling ₹1,72,000 — executed from Mumbai on a new iPhone never previously registered on this account.</span></div>
+            <div class="report-evidence-item"><span class="ev-num">2</span><span>Account's average transaction amount is ₹3,200; maximum historical transaction was ₹9,800. Suspicious transactions are 13×–23× above average.</span></div>
+            <div class="report-evidence-item"><span class="ev-num">3</span><span>All 22 prior transactions in the last 30 days were executed in Ahmedabad using a Samsung Galaxy A52. This is the first transaction from Mumbai or any iPhone.</span></div>
+            <div class="report-evidence-item"><span class="ev-num">4</span><span>Destination accounts ACC-4421, ACC-5532, and ACC-7743 have been flagged in prior unrelated suspicious pattern reviews. All three received funds within the same 3-minute window.</span></div>
+            <div class="report-evidence-item"><span class="ev-num">5</span><span>The account balance (₹74,500) was significantly drawn down. Total suspicious debit represents approximately 230% of the account's average monthly activity.</span></div>
+          </div>
+        </div>
+
+        <!-- 4. Transaction Pattern -->
+        <div class="report-section">
+          <div class="report-section-title"><span class="section-num">04</span> Suspicious Transaction Pattern</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="background:var(--bg-surface);">
+              <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;border-bottom:1px solid var(--border);">Transaction ID</th>
+              <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;border-bottom:1px solid var(--border);">Time</th>
+              <th style="text-align:right;padding:8px 12px;color:var(--text-muted);font-size:11px;border-bottom:1px solid var(--border);">Amount</th>
+              <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;border-bottom:1px solid var(--border);">Location</th>
+              <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;border-bottom:1px solid var(--border);">Device</th>
+              <th style="text-align:center;padding:8px 12px;color:var(--text-muted);font-size:11px;border-bottom:1px solid var(--border);">Status</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-light);background:rgba(239,68,68,0.04);">
+                <td style="padding:8px 12px;font-family:monospace;font-size:12px;">TX-88210001</td>
+                <td style="padding:8px 12px;font-weight:700;color:var(--risk-critical);">02:15 AM</td>
+                <td style="padding:8px 12px;text-align:right;font-weight:800;color:var(--risk-critical);">₹42,000</td>
+                <td style="padding:8px 12px;">Mumbai</td>
+                <td style="padding:8px 12px;">New iPhone</td>
+                <td style="padding:8px 12px;text-align:center;"><span class="risk-badge risk-critical">Suspicious</span></td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-light);background:rgba(239,68,68,0.04);">
+                <td style="padding:8px 12px;font-family:monospace;font-size:12px;">TX-88210002</td>
+                <td style="padding:8px 12px;font-weight:700;color:var(--risk-critical);">02:16 AM</td>
+                <td style="padding:8px 12px;text-align:right;font-weight:800;color:var(--risk-critical);">₹55,000</td>
+                <td style="padding:8px 12px;">Mumbai</td>
+                <td style="padding:8px 12px;">New iPhone</td>
+                <td style="padding:8px 12px;text-align:center;"><span class="risk-badge risk-critical">Suspicious</span></td>
+              </tr>
+              <tr style="background:rgba(239,68,68,0.04);">
+                <td style="padding:8px 12px;font-family:monospace;font-size:12px;">TX-88210003</td>
+                <td style="padding:8px 12px;font-weight:700;color:var(--risk-critical);">02:17 AM</td>
+                <td style="padding:8px 12px;text-align:right;font-weight:800;color:var(--risk-critical);">₹75,000</td>
+                <td style="padding:8px 12px;">Mumbai</td>
+                <td style="padding:8px 12px;">New iPhone</td>
+                <td style="padding:8px 12px;text-align:center;"><span class="risk-badge risk-critical">Suspicious</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 5. Network Observations -->
+        <div class="report-section">
+          <div class="report-section-title"><span class="section-num">05</span> Network Observations</div>
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
+            The subject account transferred funds to three accounts within 3 minutes. These accounts require independent investigation. The following relationships were identified:
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;font-size:12.5px;">
+              <span class="risk-badge risk-critical" style="min-width:85px;justify-content:center;">Requires review</span>
+              <span style="font-weight:600;">ACC-4421 (Bharat T.)</span>
+              <span style="color:var(--text-muted);">Received ₹42,000</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;font-size:12.5px;">
+              <span class="risk-badge risk-high" style="min-width:85px;justify-content:center;">Suspicious</span>
+              <span style="font-weight:600;">ACC-5532 (Meena P.)</span>
+              <span style="color:var(--text-muted);">Received ₹55,000</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;font-size:12.5px;">
+              <span class="risk-badge risk-critical" style="min-width:85px;justify-content:center;">Requires review</span>
+              <span style="font-weight:600;">ACC-7743 (Vikram R.)</span>
+              <span style="color:var(--text-muted);">Received ₹75,000</span>
+            </div>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text-muted);font-style:italic;">
+            ⚠ Relationship flags do not constitute a criminal determination. Independent investigation of connected accounts is required before any regulatory action.
+          </div>
+        </div>
+
+        <!-- 6. AI-Assisted Summary -->
+        <div class="report-section">
+          <div class="report-section-title"><span class="section-num">06</span> AI-Assisted Summary</div>
+          <div class="report-ai-block" style="margin-bottom:8px;">
+            <strong>AI Assessment (Demo):</strong><br><br>
+            Account ACC-8821 exhibits a high-probability unauthorized-access pattern. The combination of a new device, unfamiliar location, late-night timing, and aggressive transaction velocity — all occurring simultaneously — creates a compounding risk profile that is extremely rare in legitimate account activity.<br><br>
+            The three transactions (₹42,000 → ₹55,000 → ₹75,000) show an escalating pattern consistent with fund extraction before potential account lockout. Total exposure of ₹1,72,000 represents approximately 230% of the account's average monthly throughput.<br><br>
+            <strong>Recommendation:</strong> Immediate contact with the account holder is advised. If the account holder cannot confirm authorization, consider initiating a temporary hold and escalating to the compliance team for STR evaluation.
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);font-style:italic;">
+            ⚠ AI-assisted summary for investigator review only. This is a demo response. Connect a backend LLM API for production-grade AI analysis. Final regulatory/legal decision rests with the human investigator.
+          </div>
+        </div>
+
+        <!-- 7. Investigator Decision -->
+        <div class="report-section">
+          <div class="report-section-title"><span class="section-num">07</span> Investigator Decision</div>
+          <div id="investigator-decision-block">
+            <div style="padding:16px;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;margin-bottom:14px;">
+              <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">Select investigator decision for this case:</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-danger" onclick="recordDecision('Escalate to Compliance')">↑ Escalate to Compliance</button>
+                <button class="btn btn-warning" onclick="recordDecision('Continue Monitoring')">👁 Continue Monitoring</button>
+                <button class="btn btn-success" onclick="recordDecision('Mark as Legitimate')">✓ Mark as Legitimate</button>
+                <button class="btn btn-secondary" onclick="recordDecision('Request More Information')">ℹ Request More Info</button>
+              </div>
+            </div>
+            <div id="decision-recorded" style="display:none;padding:12px 16px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:6px;">
+              <strong style="color:var(--risk-low);">Decision Recorded</strong>
+              <span id="decision-text" style="color:var(--text-secondary);margin-left:8px;font-size:13px;"></span>
+              <span style="color:var(--text-muted);font-size:11px;margin-left:8px;" id="decision-timestamp"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8. Next Steps -->
+        <div class="report-section">
+          <div class="report-section-title"><span class="section-num">08</span> Recommended Next Steps</div>
+          <div style="display:flex;flex-direction:column;gap:5px;font-size:13px;">
+            <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;">
+              <span style="background:var(--accent);color:#fff;border-radius:50%;width:20px;height:20px;min-width:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">1</span>
+              <span style="color:var(--text-secondary);">Contact account holder immediately to verify if the three Mumbai transactions (02:15–02:17 AM) were authorized.</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;">
+              <span style="background:var(--accent);color:#fff;border-radius:50%;width:20px;height:20px;min-width:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">2</span>
+              <span style="color:var(--text-secondary);">Review device registration and authentication logs for the new iPhone device ID.</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;">
+              <span style="background:var(--accent);color:#fff;border-radius:50%;width:20px;height:20px;min-width:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">3</span>
+              <span style="color:var(--text-secondary);">Initiate independent investigation for recipient accounts ACC-4421, ACC-5532, and ACC-7743.</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;">
+              <span style="background:var(--accent);color:#fff;border-radius:50%;width:20px;height:20px;min-width:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">4</span>
+              <span style="color:var(--text-secondary);">If unauthorized access is confirmed, submit a Suspicious Transaction Report (STR) in accordance with applicable AML regulations.</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;">
+              <span style="background:var(--accent);color:#fff;border-radius:50%;width:20px;height:20px;min-width:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">5</span>
+              <span style="color:var(--text-secondary);">Schedule next review within 24 hours of account holder contact or regulatory timeline, whichever is earlier.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report Footer -->
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);flex-wrap:wrap;gap:8px;">
+          <span>FinGuard Investigation Copilot — Demo Report</span>
+          <span id="report-footer-time"></span>
+          <span>Investigator: Siddharth A. (Sr. Investigator)</span>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="../js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  buildSidebar('reports', '../');
+  buildTopbar('Investigation Reports', false);
+});
+
+function generateReport() {
+  document.getElementById('report-empty').style.display = 'none';
+  document.getElementById('report-content').style.display = 'block';
+  const now = new Date().toLocaleString('en-IN', {
+    day:'2-digit', month:'short', year:'numeric',
+    hour:'2-digit', minute:'2-digit', hour12:true
+  });
+  document.getElementById('report-generated-time').textContent = 'Generated: ' + now;
+  document.getElementById('report-footer-time').textContent = 'Generated: ' + now;
+  showToast('Investigation brief generated for Case INV-001 / Alert A001', 'success', 4000);
+
+  // Auto-scroll
+  setTimeout(() => {
+    document.getElementById('report-content').scrollIntoView({ behavior:'smooth' });
+  }, 200);
+}
+
+// Auto-generate if opened from alert-details with ?id=A001
+const alertId = new URLSearchParams(window.location.search).get('id');
+if (alertId === 'A001') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(generateReport, 400));
+}
+
+function recordDecision(decision) {
+  const now = new Date().toLocaleString('en-IN', {
+    day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', hour12:true
+  });
+  document.getElementById('decision-text').textContent = decision;
+  document.getElementById('decision-timestamp').textContent = '— ' + now + ' — Siddharth A.';
+  document.getElementById('decision-recorded').style.display = 'block';
+
+  // Save to localStorage
+  localStorage.setItem('fg_report_decision_A001', JSON.stringify({ decision, time: now }));
+
+  showToast(`Decision recorded: ${decision}`, 'success');
+}
+</script>
+</body>
+</html>
