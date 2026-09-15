@@ -8,8 +8,8 @@
 |---|---|
 | **Team Name** | The Infinite Loops |
 | **Track** | AI |
-| **Team Lead** | Investigator Lead — lead@theinfiniteloops.dev |
-| **Members** | Member 1 (Frontend), Member 2 (Backend), Member 3 (Risk Engine), Member 4 (AI Copilot) |
+| **Team Lead** | Bhatti Meet Shaileshbhai — 25dce010@charusat.edu.in |
+| **Members** | Bhensdadiya Jay (d26dce128@charusat.edu.in), Dangar Jay (d26aiml091@charusat.edu.in), Patel Kushal (d26dce143@charusat.edu.in) |
 
 ---
 

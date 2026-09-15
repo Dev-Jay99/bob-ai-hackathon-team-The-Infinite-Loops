@@ -9,25 +9,24 @@ graph TD
     B -->|queryAlerts / queryAlertById| C{Database Layer}
     C -->|JSON mode default| D[JSON Files in data/]
     C -->|PostgreSQL mode when DATABASE_URL set| E[PostgreSQL]
-    B -->|calculateRiskScore| F[Risk Engine Stub - scoring.js]
-    B -->|buildAccountNetwork| G[Network Graph Stub - graphBuilder.js]
-    B -->|chat / generateBrief| H[AI Copilot Stub - copilot.js]
-    F -.->|TODO MEMBER 3 - Replace with real ML model| F
-    G -.->|TODO MEMBER 3 - Replace with real graph traversal| G
-    H -.->|TODO MEMBER 4 - Replace with watsonx.ai| H
+    B -->|calculateRiskScore| F[Risk Engine - scoring.js]
+    B -->|buildAccountNetwork| G[Network Graph - graphBuilder.js]
+    B -->|chat / explainAlert / generateBrief| H[AI Copilot & Brief Engine - aiService.js / copilot.js]
+    H -->|Compliance Guardrails| I[Sentence Hedging & AML Safety]
+    H -.->|Pluggable LLM Endpoint| J[IBM watsonx.ai / Granite]
 ```
 
 ## Components
 
 | Component | Technology | Responsibility |
 |---|---|---|
-| Frontend | HTML5, CSS3, Vanilla JavaScript | Dashboard, Alerts Queue, Alert Details workspace, Network Graph, Investigations, Reports, Charts |
-| API Server | Node.js + Express.js | REST API, static file serving, request validation, error handling |
+| Frontend | HTML5, CSS3, Vanilla JavaScript | Dashboard, Alerts Queue, Alert Details workspace, Network Graph, Investigations, Dynamic PDF Reports, Chart.js Analytics |
+| API Server | Node.js + Express.js | REST API, static file serving, request validation, error handling, session proxying |
 | Database Layer | JSON File Store / PostgreSQL | Dual-mode data persistence; auto-selected by `DATABASE_URL` env var |
-| Risk Engine | JavaScript stub | Multi-factor risk scoring; returns 6 factors per alert; benchmark returns 94/CRITICAL |
-| Network Builder | JavaScript stub | Returns vis-network compatible node/edge graph; benchmark returns A001→A023→A051/A072 |
-| AI Copilot | JavaScript stub | Case-aware chat and investigation brief generation; placeholder for watsonx.ai |
-| Synthetic Data | Node.js generator | 600 accounts, 11200+ transactions, 240 alerts including benchmark case ALT-10482 |
+| Risk Engine | JavaScript / Node.js | Multi-factor risk scoring; returns 6 explainable factors per alert (benchmark ALT-10482 returns 94/CRITICAL, ALT-00200 returns 53/MEDIUM) |
+| Network Builder | JavaScript / vis-network | Returns vis-network compatible node/edge graph; benchmark returns A001→A023→A051/A072 pass-through chain |
+| AI Copilot | JavaScript / Grounded Engine | Natural language Q&A grounded on transaction records, sentence hedging compliance guardrails, and dynamic PDF briefs |
+| Synthetic Data | Node.js generator | 600 accounts, 11,200+ transactions, 240 alerts including benchmark cases ALT-10482 and ALT-00200 |
 
 ## Data Flow
 

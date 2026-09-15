@@ -2,17 +2,15 @@ team:
   name: "The Infinite Loops"
   track: "AI"
   lead:
-    name: "Investigator Lead"
-    email: "lead@theinfiniteloops.dev"
+    name: "Bhatti Meet Shaileshbhai"
+    email: "25dce010@charusat.edu.in"
   members:
-    - name: "Member 1 - Frontend"
-      email: "member1@theinfiniteloops.dev"
-    - name: "Member 2 - Backend"
-      email: "member2@theinfiniteloops.dev"
-    - name: "Member 3 - Risk Engine"
-      email: "member3@theinfiniteloops.dev"
-    - name: "Member 4 - AI Copilot"
-      email: "member4@theinfiniteloops.dev"
+    - name: "Bhensdadiya Jay"
+      email: "d26dce128@charusat.edu.in"
+    - name: "Dangar Jay"
+      email: "d26aiml091@charusat.edu.in"
+    - name: "Patel Kushal"
+      email: "d26dce143@charusat.edu.in"
 
 submission:
   title: "FinGuard"

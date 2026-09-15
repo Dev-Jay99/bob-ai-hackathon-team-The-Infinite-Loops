@@ -18,11 +18,11 @@ FinGuard is an enterprise-grade, AI-powered Bank Fraud and AML Investigation Ope
    - **Preceding Transaction Sequence** — the burst of transactions around the alert event, with the triggering transaction highlighted
    - **Account Network Graph** — interactive vis-network diagram showing connected accounts colored by risk level, clickable to inspect each node
 
-4. **Investigator consults the AI Copilot** — The case-aware copilot panel shows the case reference, suggests 6 investigation questions, and responds to natural language queries with evidence-based placeholder responses (real watsonx.ai integration pending Member 4). The investigator can generate a full Investigation Brief with one click.
+4. **Investigator consults the AI Copilot** — The case-aware copilot panel shows the case reference, suggests 6 investigation questions, and answers natural language queries dynamically using grounded database records (with strict AML compliance hedging). The investigator can generate a full, auditable Investigation Brief with one click.
 
 5. **Investigator makes a decision** — The decision section has Escalate, Monitor, and Mark Legitimate buttons with an operational notes field. Clicking any button calls the backend API, which persists the decision. The status badge updates immediately in the UI.
 
-6. **Case appears in Investigations** — Escalated and monitored cases appear in the Investigations page for tracking and follow-up. Investigation Briefs can be printed or saved as PDF from the Reports page.
+6. **Case appears in Investigations & Reports** — Escalated and monitored cases appear in the Investigations page for tracking and follow-up. Dynamic Investigation Briefs for any case can be viewed, customized, and printed or saved as PDF from the Reports page.
 
 ## Architecture Diagram
 
@@ -33,13 +33,15 @@ Browser (HTML/CSS/Vanilla JS)
       ▼
 Node.js + Express (port 3000)
 ├── Serves frontend/  as static files
-├── GET /api/alerts              → DB query
-├── GET /api/alerts/stats        → DB aggregate
-├── GET /api/alerts/:id          → DB + Risk Engine stub + Network stub
-├── GET /api/accounts/:id        → DB + Network stub
-├── POST /api/investigations/:id → DB write
-├── POST /api/copilot/chat       → Copilot stub
-└── POST /api/copilot/brief      → Copilot stub
+├── GET /api/alerts              → DB query & pagination
+├── GET /api/alerts/stats        → DB aggregate KPIs
+├── GET /api/alerts/:id          → DB + Risk Engine + Network Traversal
+├── GET /api/accounts/:id        → DB + Network Traversal
+├── POST /api/investigations/:id → DB decision write
+├── POST /api/copilot/chat       → AI Copilot Natural Language Engine
+├── POST /api/copilot/explain-alert → Anomaly & Evidence Explainer
+├── POST /api/copilot/brief      → Grounded Audit Brief Generator
+└── POST /api/reports/investigation → Dynamic Report Export
       │
       ├── JSON File Store (default, no setup required)
       └── PostgreSQL (when DATABASE_URL is set)

@@ -17,5 +17,8 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "pptxgenjs": "^4.0.1"
   }
 }

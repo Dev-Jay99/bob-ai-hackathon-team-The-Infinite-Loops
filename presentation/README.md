@@ -8,8 +8,11 @@ Place your slide deck in this folder.
   slides.pptx     ← Acceptable
   slides.key      ← Acceptable (macOS Keynote)
 
-Rename your file to `slides.pdf` (or `slides.pptx`) so the evaluation
-pipeline can locate it reliably.
+## Available Artifacts
+
+- **`slides.pptx`** — PowerPoint presentation (8 slides, 16:9 widescreen, dark theme). Open in PowerPoint or Google Slides.
+- **`slides.pdf`** — PDF version of the presentation deck (8 slides, vector-rendered via Edge headless).
+- **`slides.html`** — Interactive web presentation with keyboard navigation (Arrow/Space keys). Open in any browser. Open in any browser to present.
 
 ## Recommended Slide Structure (5–8 slides)
 
