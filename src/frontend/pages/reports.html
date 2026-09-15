@@ -112,7 +112,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Investigations
       </a>
-      <a href="alert-details.html?id=ALT-10482" class="nav-item">
+      <a href="copilot.html" class="nav-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
         AI Copilot
       </a>
@@ -142,10 +142,37 @@
   <!-- Main Content -->
   <main class="main-content">
 
+    <!-- Case Selection Bar (no-print) -->
+    <div class="report-case-bar no-print" style="max-width:820px;margin:0 auto 16px;background:var(--bg-panel);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:300px;">
+          <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Select Case:</span>
+          <select id="report-case-select" class="form-control" style="flex:1;max-width:420px;font-family:var(--font-sans);font-size:13px;">
+            <option value="">Loading all alert cases…</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="text" id="report-case-input" class="form-control" placeholder="e.g. ALT-00200" style="width:130px;font-family:var(--mono);font-size:13px;text-transform:uppercase;">
+          <button class="btn btn-secondary btn-sm" id="btn-load-report">Load</button>
+          <a id="link-copilot-investigate" href="copilot.html" class="btn btn-ghost btn-sm" style="font-size:12px;">Copilot ↗</a>
+        </div>
+      </div>
+
+      <!-- Quick Case Switcher Chips -->
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--text-muted);font-weight:500;">Quick Cases:</span>
+        <button class="quick-case-btn btn btn-ghost btn-sm" data-id="ALT-00200" style="font-size:11px;padding:3px 10px;border:1px solid var(--border-subtle);border-radius:12px;">ALT-00200 (Nikhil Gupta)</button>
+        <button class="quick-case-btn btn btn-ghost btn-sm" data-id="ALT-10482" style="font-size:11px;padding:3px 10px;border:1px solid var(--border-subtle);border-radius:12px;">ALT-10482 (Vikram Mehta)</button>
+        <button class="quick-case-btn btn btn-ghost btn-sm" data-id="ALT-00012" style="font-size:11px;padding:3px 10px;border:1px solid var(--border-subtle);border-radius:12px;">ALT-00012 (Deepa Pillai)</button>
+        <button class="quick-case-btn btn btn-ghost btn-sm" data-id="ALT-00001" style="font-size:11px;padding:3px 10px;border:1px solid var(--border-subtle);border-radius:12px;">ALT-00001 (Ananya Sharma)</button>
+        <button class="quick-case-btn btn btn-ghost btn-sm" data-id="ALT-00005" style="font-size:11px;padding:3px 10px;border:1px solid var(--border-subtle);border-radius:12px;">ALT-00005 (Amit Shah)</button>
+      </div>
+    </div>
+
     <!-- Loading state -->
     <div id="report-loading" class="state-container" style="min-height:60vh;">
       <div class="spinner"></div>
-      <div class="state-title">Loading report…</div>
+      <div class="state-title" id="report-loading-title">Generating dynamic case report…</div>
     </div>
 
     <!-- Report document -->

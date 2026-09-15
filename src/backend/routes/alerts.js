@@ -19,7 +19,7 @@ router.get('/stats', async (req, res, next) => {
 router.get('/', async (req, res, next) => {
   try {
     const page  = Math.max(1, parseInt(req.query.page,  10) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 20));
     const search    = (req.query.search    || '').trim();
     const riskLevel = (req.query.riskLevel || '').toUpperCase();
     const status    = (req.query.status    || '').toUpperCase();

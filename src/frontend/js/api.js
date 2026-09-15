@@ -82,6 +82,21 @@ async function postCopilotBrief(caseContext) {
   });
 }
 
+async function postCopilotExplainAlert(alertId) {
+  return apiFetch('/api/copilot/explain-alert', {
+    method: 'POST',
+    body: JSON.stringify({ alertId }),
+  });
+}
+
+// ─── Reports (AI) ─────────────────────────────────────────────────────────────
+async function postAiInvestigationReport(alertId, investigatorNotes, finalDecision) {
+  return apiFetch('/api/reports/investigation', {
+    method: 'POST',
+    body: JSON.stringify({ alertId, investigatorNotes: investigatorNotes || '', finalDecision: finalDecision || null }),
+  });
+}
+
 // ─── Export ───────────────────────────────────────────────────────────────────
 window.API = {
   getAlerts,
@@ -93,4 +108,8 @@ window.API = {
   postInvestigationAction,
   postCopilotChat,
   postCopilotBrief,
+  postCopilotExplainAlert,
+  postAiInvestigationReport,
 };
+
+

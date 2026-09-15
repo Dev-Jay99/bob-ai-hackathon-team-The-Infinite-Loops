@@ -228,6 +228,11 @@
   document.getElementById('copilot-case-tag').textContent =
     `Case: ${alert.id} · ${caseContext.riskLevel} · Score ${caseContext.riskScore}/100`;
 
+  const fullCopilotLink = document.getElementById('open-full-copilot');
+  if (fullCopilotLink) {
+    fullCopilotLink.href = `copilot.html?id=${encodeURIComponent(alert.id)}`;
+  }
+
   const SUGGESTED = [
     'Why is this alert critical?',
     'What is unusual about this transaction?',
@@ -246,16 +251,59 @@
     sqWrap.appendChild(btn);
   });
 
-  async function addChatMessage(role, text) {
+  function addChatMessage(role, text) {
     const msgs = document.getElementById('chat-messages');
     const wrap = document.createElement('div');
     wrap.className = `chat-message ${role}`;
     wrap.innerHTML = `
       <span class="who">${role === 'user' ? 'You' : 'AI Copilot'}</span>
-      <div class="bubble">${text}</div>`;
+      <div class="bubble" style="white-space:pre-wrap;">${text}</div>`;
     msgs.appendChild(wrap);
     msgs.scrollTop = msgs.scrollHeight;
   }
+
+  // Auto-load alert explanation on open
+  (async function loadExplanation() {
+    const msgs = document.getElementById('chat-messages');
+    msgs.innerHTML = '';  // clear placeholder text
+    const typing = document.createElement('div');
+    typing.className = 'chat-message ai';
+    typing.id = 'typing-indicator';
+    typing.innerHTML = '<span class="who">AI Copilot</span><div class="bubble" style="color:var(--text-muted);">Analyzing alert…</div>';
+    msgs.appendChild(typing);
+
+    const { data, error } = await API.postCopilotExplainAlert(alert.id);
+    const t = document.getElementById('typing-indicator');
+    if (t) t.remove();
+
+    if (error || !data) {
+      addChatMessage('ai', 'AI service unavailable. Use the suggested questions to query manually.');
+      return;
+    }
+
+    // Show explanation
+    addChatMessage('ai', data.explanation || 'Alert analysis loaded.');
+
+    // Show evidence and recommendations inline
+    if ((data.evidence && data.evidence.length) || (data.recommendations && data.recommendations.length)) {
+      let html = '';
+      if (data.evidence && data.evidence.length) {
+        html += '<strong>Evidence:</strong><ul style="margin:4px 0 8px 16px;">';
+        data.evidence.forEach(e => { html += `<li style="margin:2px 0;">${e}</li>`; });
+        html += '</ul>';
+      }
+      if (data.recommendations && data.recommendations.length) {
+        html += '<strong>Recommended steps:</strong><ul style="margin:4px 0 0 16px;">';
+        data.recommendations.forEach(r => { html += `<li style="margin:2px 0;">${r}</li>`; });
+        html += '</ul>';
+      }
+      const wrap = document.createElement('div');
+      wrap.className = 'chat-message ai';
+      wrap.innerHTML = `<span class="who">AI Copilot</span><div class="bubble">${html}</div>`;
+      msgs.appendChild(wrap);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+  })();
 
   async function sendCopilotMessage(message) {
     if (!message.trim()) return;
@@ -292,13 +340,14 @@
     if (e.key === 'Enter') sendCopilotMessage(e.target.value.trim());
   });
 
-  // Generate Brief
+  // Generate Brief — calls Python /api/reports/investigation via Node proxy
   document.getElementById('btn-brief').addEventListener('click', async () => {
     const btn = document.getElementById('btn-brief');
     btn.disabled = true;
     btn.textContent = 'Generating…';
 
-    const { data: brief, error: err } = await API.postCopilotBrief(caseContext);
+    const notes = document.getElementById('inv-notes').value.trim();
+    const { data: reportData, error: err } = await API.postAiInvestigationReport(alert.id, notes, null);
     btn.disabled = false;
     btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Generate Investigation Brief`;
 
@@ -307,8 +356,19 @@
       return;
     }
 
-    // Open in reports page
-    sessionStorage.setItem('finguard_brief', JSON.stringify({ alertId: alert.id, brief: brief.brief, context: caseContext }));
+    // Build a formatted brief text from the AI summary
+    const brief = [
+      `FINGUARD AI INVESTIGATION BRIEF`,
+      `${'─'.repeat(60)}`,
+      `Case: ${reportData.alertId}`,
+      ``,
+      reportData.aiSummary,
+      ``,
+      `${'─'.repeat(60)}`,
+      reportData.disclaimer || '',
+    ].join('\n');
+
+    sessionStorage.setItem('finguard_brief', JSON.stringify({ alertId: alert.id, brief, context: caseContext }));
     window.open(`reports.html?alertId=${encodeURIComponent(alert.id)}`, '_blank');
   });
 

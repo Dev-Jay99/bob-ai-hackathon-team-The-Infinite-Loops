@@ -1,134 +1,136 @@
+'use strict';
+
 /**
- * FinGuard AI Copilot Service — Developer Stub
+ * FinGuard Copilot Service
  *
- * ╔══════════════════════════════════════════════════════════════════════╗
- * ║  TODO MEMBER 4 — Replace this entire module with real AI inference. ║
- * ║  See docs/member-4-handoff.md for the full integration contract.    ║
- * ╚══════════════════════════════════════════════════════════════════════╝
- *
- * caseContext shape:
- * {
- *   alertId:       string,   // e.g. "ALT-10482"
- *   riskLevel:     string,   // CRITICAL | HIGH | MEDIUM | LOW
- *   riskScore:     number,   // 0–100
- *   accountId:     string,   // e.g. "A001"
- *   customerName:  string,
- *   transactionId: string,
- *   amount:        number,
- *   factors:       Array<{ name, score, maxScore, explanation }>
- * }
+ * Core service layer connecting the REST API to the dynamic FinGuard AI engine.
+ * Powered by real database records from src/data/*.json (alerts, accounts, transactions, risk factors).
  */
+
+const ai = require('./aiService');
 
 class CopilotService {
   /**
-   * chat — responds to an investigator's question about the current case.
-   *
-   * TODO MEMBER 4 — Replace the body of this method with a call to
-   * watsonx.ai or your chosen LLM. Pass the caseContext as a system prompt
-   * and the message as the user turn.
-   *
-   * @param {object} caseContext
-   * @param {string} message
-   * @returns {{ response: string, isPlaceholder: true }}
+   * chat — dynamically answers an investigator's question about a case using real banking data.
    */
-  chat(caseContext, message) {
-    // TODO MEMBER 4 — Replace with real LLM call
+  async chat(caseContext, message, detail) {
     const ctx = caseContext || {};
-    const alertId   = ctx.alertId   || 'unknown';
-    const riskLevel = ctx.riskLevel || 'unknown';
-    const riskScore = ctx.riskScore || 0;
-    const customer  = ctx.customerName || ctx.accountId || 'unknown';
-    const amount    = ctx.amount ? `₹${Number(ctx.amount).toLocaleString('en-IN')}` : 'unknown';
-
-    const q = (message || '').toLowerCase();
-
-    let response;
-
-    if (q.includes('critical') || q.includes('why')) {
-      response = `Alert ${alertId} is rated ${riskLevel} (${riskScore}/100) because the transaction combines multiple extreme anomalies: the amount (${amount}) is far above ${customer}'s historical maximum, it was sent from an unrecognized device in an unusual city at 02:17 AM, and three transfers to flagged accounts occurred within 2 minutes.`;
-    } else if (q.includes('unusual') || q.includes('transaction')) {
-      response = `The transaction linked to ${alertId} shows three simultaneous anomalies: location (Mumbai vs usual Ahmedabad), device (unrecognized iPhone vs usual Samsung), and time (02:17 AM). Any one of these alone would score MEDIUM. All three together push it to ${riskLevel}.`;
-    } else if (q.includes('network') || q.includes('account')) {
-      response = `The receiving account A023 is a known high-risk pass-through hub. Funds from this alert were observed flowing A001 → A023 → A051 and A023 → A072 within minutes. This layering pattern is consistent with AML typology Stage 2 (Layering).`;
-    } else if (q.includes('risk factor') || q.includes('key')) {
-      const topFactor = (ctx.factors || [])[0];
-      const factorNote = topFactor ? `Top factor: ${topFactor.name} scored ${topFactor.score}/${topFactor.maxScore}.` : '';
-      response = `The six risk factors for ${alertId} total ${riskScore}/100. Amount and Velocity anomalies each score maximum points. ${factorNote}`;
-    } else if (q.includes('evidence') || q.includes('review')) {
-      response = `Recommended evidence for ${alertId}: (1) Review the 3-transaction burst sequence at 02:15–02:17. (2) Pull KYC documents for A023. (3) Check if ${customer} filed any travel notices. (4) Request device fingerprint logs for the iPhone 14 Pro. (5) Review A051 and A072 for offsetting withdrawals.`;
-    } else if (q.includes('summar') || q.includes('brief')) {
-      response = `Case Summary — ${alertId}: Customer ${customer} (${ctx.accountId || ''}) sent ₹172,000 across 3 rapid transfers to flagged accounts A023 and A051 at 02:15–02:17 AM from an unrecognized device in Mumbai. Risk score: ${riskScore}/100 (${riskLevel}). Account A023 is a known pass-through node. Pattern is consistent with AML layering. Recommend escalation for SAR filing.`;
-    } else {
-      response = `Based on case ${alertId} (${riskLevel}, ${riskScore}/100), the transaction context and risk profile suggest this warrants immediate investigator attention. Please review the Risk Assessment and Transaction Sequence sections for detailed evidence.`;
+    const alertId = ctx.alertId || (detail && detail.alert ? detail.alert.id : null);
+    if (!alertId) {
+      return {
+        response: 'No alert ID selected. Please select a case to begin investigation assistance.',
+        disclaimer: ai.DISCLAIMER,
+        isPlaceholder: false,
+      };
     }
 
-    return { response, isPlaceholder: true };
+    // Build structured context from detail (db) or fallback to caseContext
+    const fullCtx = detail
+      ? ai.buildCaseContext(
+          alertId,
+          detail.alert,
+          detail.transaction,
+          detail.account,
+          detail.riskAssessment,
+          detail
+        )
+      : {
+          caseId:      alertId,
+          riskScore:   ctx.riskScore   || 0,
+          riskLevel:   ctx.riskLevel   || 'UNKNOWN',
+          riskFactors: ctx.factors ? ctx.factors.map(f => f.name).join(', ') : '',
+          factorList:  ctx.factors || [],
+          transaction: {
+            id:         ctx.transactionId || 'Unknown',
+            amount:     ctx.amount   || 0,
+            currency:   ctx.currency || 'INR',
+            location:   ctx.location || 'Unknown',
+            device:     ctx.device   || 'Unknown',
+            time:       ctx.time     || 'Unknown',
+            date:       ctx.date     || 'Unknown',
+            receiverId: ctx.receiverId || 'Unknown',
+            senderId:   ctx.accountId  || 'Unknown',
+          },
+          customer: {
+            id:            ctx.accountId  || 'Unknown',
+            name:          ctx.customerName || 'Account Holder',
+            usualLocation: ctx.usualCity  || 'Unknown',
+            usualDevice:   ctx.usualDevice || 'Unknown',
+            averageAmount: ctx.avgAmount  || 0,
+            maximumAmount: ctx.maxAmount  || 0,
+            balance:       ctx.balance    || 0,
+          },
+        };
+
+    const response = await ai.ask(fullCtx, String(message).slice(0, 1000));
+    return {
+      response,
+      caseId: alertId,
+      disclaimer: ai.DISCLAIMER,
+      isPlaceholder: false,
+    };
   }
 
   /**
-   * generateInvestigationBrief — produces a structured investigation report.
-   *
-   * TODO MEMBER 4 — Replace with a real LLM call that generates a
-   * professional SAR-style investigation brief using the full case context.
-   *
-   * @param {object} caseContext
-   * @returns {{ brief: string, isPlaceholder: true }}
+   * explainAlert — generates grounded anomaly explanation, evidence signals, and recommendations.
    */
-  generateInvestigationBrief(caseContext) {
-    // TODO MEMBER 4 — Replace with real report generation
-    const ctx = caseContext || {};
-    const alertId   = ctx.alertId   || 'N/A';
-    const riskLevel = ctx.riskLevel || 'N/A';
-    const riskScore = ctx.riskScore || 0;
-    const customer  = ctx.customerName || ctx.accountId || 'N/A';
-    const accountId = ctx.accountId   || 'N/A';
-    const txnId     = ctx.transactionId || 'N/A';
-    const amount    = ctx.amount ? `₹${Number(ctx.amount).toLocaleString('en-IN')}` : 'N/A';
-    const now       = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+  async explainAlert(alertId, detail) {
+    if (!detail) {
+      return {
+        explanation: `Alert ${alertId} was not found in the database.`,
+        evidence: [],
+        recommendations: [],
+        disclaimer: ai.DISCLAIMER,
+        isPlaceholder: false,
+      };
+    }
 
-    const brief = `FINGUARD INVESTIGATION BRIEF
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const ctx = ai.buildCaseContext(
+      alertId,
+      detail.alert,
+      detail.transaction,
+      detail.account,
+      detail.riskAssessment,
+      detail
+    );
 
-CASE REFERENCE:     ${alertId}
-TRANSACTION:        ${txnId}
-GENERATED:          ${now} IST
-CLASSIFICATION:     ${riskLevel} RISK (${riskScore}/100)
-STATUS:             PENDING INVESTIGATOR DECISION
+    const result = ai.explainAlert(ctx);
+    return {
+      ...result,
+      caseId: alertId,
+      isPlaceholder: false,
+    };
+  }
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. SUBJECT INFORMATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Account ID:         ${accountId}
-Customer Name:      ${customer}
-Transaction Amount: ${amount}
+  /**
+   * generateInvestigationBrief — produces formal, auditable Investigation Brief.
+   */
+  async generateInvestigationBrief(caseContext, detail, investigatorNotes) {
+    const alertId = (caseContext || {}).alertId || (detail && detail.alert ? detail.alert.id : 'UNKNOWN');
+    const ctx = detail
+      ? ai.buildCaseContext(
+          alertId,
+          detail.alert,
+          detail.transaction,
+          detail.account,
+          detail.riskAssessment,
+          detail
+        )
+      : {
+          caseId:      alertId,
+          riskScore:   (caseContext || {}).riskScore  || 0,
+          riskLevel:   (caseContext || {}).riskLevel  || 'UNKNOWN',
+          customer:    { name: (caseContext || {}).customerName || 'Account Holder', id: (caseContext || {}).accountId || 'Unknown', usualLocation: 'Unknown', averageAmount: 0, maximumAmount: 0, balance: 0 },
+          transaction: { id: 'TXN', amount: (caseContext || {}).amount || 0, currency: 'INR', location: 'Unknown', device: 'Unknown', time: 'Unknown', date: 'Unknown', receiverId: 'Unknown' },
+        };
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-2. ANOMALY SUMMARY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${(ctx.factors || []).map(f =>
-  `  ${f.name.padEnd(22)} ${String(f.score).padStart(2)}/${f.maxScore}  ${f.explanation}`
-).join('\n') || '  [PLACEHOLDER — risk factors not available]'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-3. NETWORK OBSERVATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[PLACEHOLDER] Recipient account A023 identified as high-risk pass-through.
-Funds observed flowing to A051 and A072 within minutes of receipt.
-Pattern consistent with AML Stage 2 — Layering.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-4. RECOMMENDED ACTION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[PLACEHOLDER] Based on risk score of ${riskScore}/100 and ${riskLevel} classification:
-  • Escalate to Senior Compliance Officer
-  • File Suspicious Activity Report (SAR) within 30 days
-  • Freeze outgoing transactions pending investigation
-  • Request KYC re-verification for accounts A001, A023, A051, A072
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
-
-    return { brief, isPlaceholder: true };
+    const { brief, disclaimer } = ai.generateBrief(ctx, investigatorNotes);
+    return {
+      brief,
+      caseId: alertId,
+      disclaimer,
+      isPlaceholder: false,
+    };
   }
 }
 

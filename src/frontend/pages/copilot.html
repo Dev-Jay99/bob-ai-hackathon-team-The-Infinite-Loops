@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Copilot — FinGuard</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <style>
+    .copilot-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      align-items: stretch;
+      min-height: calc(100vh - 160px);
+    }
+    @media (max-width: 1100px) {
+      .copilot-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Left: Real cases selector panel */
+    .case-selector-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 160px);
+      min-height: 650px;
+      overflow: hidden;
+    }
+
+    .selector-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .selector-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .selector-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cases-count-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      color: var(--text-muted);
+    }
+    .case-filter-input {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-normal);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      padding: 8px 12px;
+      font-size: 12.5px;
+      outline: none;
+      font-family: var(--font);
+    }
+    .case-filter-input:focus { border-color: var(--accent-blue); }
+
+    .case-list-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .case-item-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .case-item-card:hover {
+      border-color: var(--accent-blue);
+      background: rgba(37,99,235,0.08);
+    }
+    .case-item-card.active {
+      border-color: var(--accent-blue);
+      background: rgba(37,99,235,0.14);
+      box-shadow: 0 0 0 1px var(--accent-blue);
+    }
+    .case-item-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .case-item-id {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .case-item-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+    }
+    .case-item-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Right: Copilot Main Panel */
+    .copilot-main-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 160px);
+      min-height: 650px;
+      overflow: hidden;
+    }
+
+    .copilot-bar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: var(--bg-panel);
+    }
+    .copilot-bar-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34,197,94,0.6);
+    }
+
+    /* Active Case Summary Strip (ONLY for selected case) */
+    .selected-case-strip {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .strip-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .strip-label {
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .strip-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .strip-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* Chat message history */
+    .chat-body-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .chat-msg-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 88%;
+    }
+    .chat-msg-row.ai { align-self: flex-start; }
+    .chat-msg-row.user { align-self: flex-end; align-items: flex-end; }
+
+    .chat-sender-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 0 4px;
+    }
+    .chat-bubble-box {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      line-height: 1.6;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .chat-msg-row.ai .chat-bubble-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      border-bottom-left-radius: 2px;
+    }
+    .chat-msg-row.user .chat-bubble-box {
+      background: var(--accent-blue);
+      color: #fff;
+      border-bottom-right-radius: 2px;
+    }
+
+    /* Evidence container */
+    .evidence-panel-inner {
+      background: #0B1220;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 8px;
+      font-size: 12.5px;
+    }
+    .evidence-panel-inner ul {
+      margin: 4px 0 4px 18px;
+      color: #cbd5e1;
+    }
+    .evidence-panel-inner li { margin: 3px 0; }
+
+    /* Suggested queries pills */
+    .suggested-pills-bar {
+      padding: 8px 18px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .suggested-pill-btn {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-normal);
+      border-radius: 14px;
+      color: var(--text-secondary);
+      font-size: 11.5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all 0.15s;
+    }
+    .suggested-pill-btn:hover {
+      background: var(--accent-blue-dim);
+      color: var(--accent-blue-light);
+      border-color: rgba(59,130,246,0.3);
+    }
+
+    /* Input dock */
+    .chat-input-dock {
+      padding: 12px 18px;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .chat-input-field {
+      flex: 1;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-normal);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      padding: 9px 14px;
+      font-size: 13.5px;
+      font-family: var(--font);
+      outline: none;
+    }
+    .chat-input-field:focus { border-color: var(--accent-blue); }
+
+    /* Brief Modal */
+    .brief-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .brief-modal-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 760px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .brief-modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brief-modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: #e2e8f0;
+      background: #0B1220;
+    }
+    .brief-modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5L12 1zm0 10.9l-3.5-2 .9-1.6L12 10l4-4 1.4 1.4L12 11.9z"/></svg>
+      </div>
+      <div class="sidebar-logo-text">
+        <span class="brand">FinGuard</span>
+        <span class="tagline">AML &amp; Fraud Ops</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Operations</div>
+      <a href="dashboard.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="alerts.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Alerts Queue
+      </a>
+      <a href="network.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Account Network
+      </a>
+      <div class="nav-section-label">Case Management</div>
+      <a href="investigations.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Investigations
+      </a>
+      <a href="copilot.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        AI Copilot
+      </a>
+      <a href="reports.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Reports
+      </a>
+    </nav>
+    <div class="sidebar-footer">FinGuard v1.0 · DEMO</div>
+  </aside>
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <a href="dashboard.html" class="btn btn-ghost btn-sm">← Back to Dashboard</a>
+      <div class="search-box" style="width:260px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search alerts or cases…" id="globalSearch">
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="demo-badge">DEMO SIMULATION</div>
+      <div class="user-avatar">SR</div>
+      <div class="user-info">
+        <span class="name">S. Rajan</span>
+        <span class="role">Senior Investigator</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-header page-header-row">
+      <div>
+        <h1>FinGuard AI Copilot</h1>
+        <p class="subtitle">AI-assisted fraud and AML case investigation powered by real bank transaction data</p>
+      </div>
+      <div>
+        <a class="btn btn-secondary btn-sm" id="btn-export-brief-pdf" href="reports.html?alertId=ALT-10482">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Export Case PDF Brief ↗
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Copilot Layout -->
+    <div class="copilot-layout">
+      
+      <!-- Left: Real cases from data folder -->
+      <div class="case-selector-panel">
+        <div class="selector-header">
+          <div class="selector-title-row">
+            <span class="selector-title">Select Active Case</span>
+            <span class="cases-count-badge" id="cases-count-badge">Loading…</span>
+          </div>
+          <input type="text" class="case-filter-input" id="case-search-input" placeholder="Search by Alert ID, Customer, City…">
+        </div>
+        <div class="case-list-scroll" id="case-list-container">
+          <!-- Populated dynamically with real alerts from /api/alerts -->
+          <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">Loading alerts from database…</div>
+        </div>
+      </div>
+
+      <!-- Right: Main Copilot Chat Workspace for Selected Case Only -->
+      <div class="copilot-main-panel">
+        
+        <!-- Header bar -->
+        <div class="copilot-bar-header">
+          <div class="copilot-bar-title" id="copilot-main-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--accent-blue);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="header-context-title">Case Investigation Copilot</span>
+          </div>
+          <div class="status-indicator">
+            <span class="live-dot"></span>
+            <span id="header-status-label">AI Engine Grounded</span>
+          </div>
+        </div>
+
+        <!-- Selected Case Context Summary Strip -->
+        <div class="selected-case-strip" id="selected-case-strip">
+          <div class="strip-item">
+            <span class="strip-label">Alert ID</span>
+            <span class="strip-val text-mono" id="strip-alert-id">—</span>
+          </div>
+          <div class="strip-item">
+            <span class="strip-label">Customer</span>
+            <span class="strip-val" id="strip-customer-name">—</span>
+          </div>
+          <div class="strip-item">
+            <span class="strip-label">Amount</span>
+            <span class="strip-val" style="color:var(--risk-critical);" id="strip-amount">—</span>
+          </div>
+          <div class="strip-item">
+            <span class="strip-label">Location / Device</span>
+            <span class="strip-val" id="strip-loc-device">—</span>
+          </div>
+          <div class="strip-item">
+            <span class="strip-label">Risk Rating</span>
+            <span class="strip-val" id="strip-risk-badge">—</span>
+          </div>
+          <div class="strip-actions">
+            <a href="#" id="strip-view-alert-link" class="btn btn-secondary btn-sm" style="font-size:11px;">Investigate Alert →</a>
+            <a href="#" id="strip-view-network-link" class="btn btn-ghost btn-sm" style="font-size:11px;">Network Graph →</a>
+          </div>
+        </div>
+
+        <!-- Chat history messages -->
+        <div class="chat-body-area" id="chat-messages-container">
+          <!-- Real conversation messages inserted dynamically -->
+        </div>
+
+        <!-- Suggested Queries pills -->
+        <div class="suggested-pills-bar" id="suggested-queries-bar">
+          <span style="font-size:11px;color:var(--text-muted);font-weight:600;margin-right:4px;">Prompts:</span>
+          <!-- Dynamic query buttons -->
+        </div>
+
+        <!-- Input dock -->
+        <div class="chat-input-dock">
+          <input type="text" class="chat-input-field" id="chat-user-input" placeholder="Ask AI Copilot anything about this case, customer, or transaction…" autocomplete="off">
+          <button class="btn btn-primary" id="btn-send-message">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Send
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Brief Modal -->
+    <div class="brief-modal-overlay" id="brief-modal">
+      <div class="brief-modal-card">
+        <div class="brief-modal-header">
+          <div style="font-weight:700;font-size:15px;color:var(--text-primary);" id="brief-modal-title">FinGuard AI Investigation Brief</div>
+          <button class="btn btn-ghost btn-sm" onclick="closeBriefModal()">✕</button>
+        </div>
+        <div class="brief-modal-body" id="brief-modal-content">
+          Loading investigation brief…
+        </div>
+        <div class="brief-modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="copyBriefText()">Copy Text</button>
+          <button class="btn btn-primary btn-sm" onclick="closeBriefModal()">Done</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/copilot.js"></script>
+</body>
+</html>
