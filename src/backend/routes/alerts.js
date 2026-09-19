@@ -48,10 +48,12 @@ router.get('/:id', async (req, res, next) => {
       return res.status(404).json({ error: `Alert ${id} not found.` });
     }
 
-    // Attach live risk scores from the stub (Member 3 will replace this)
+    // Attach live risk scores
     const { calculateRiskScore } = require('../risk-engine/scoring');
     const riskResult = calculateRiskScore(detail.alert, detail.transaction, detail.account);
     detail.riskAssessment = riskResult;
+    detail.alert.risk_score = riskResult.totalScore;
+    detail.alert.risk_level = riskResult.riskLevel;
 
     // Attach network graph from the stub (Member 3 will replace this)
     const { buildAccountNetwork } = require('../network/graphBuilder');

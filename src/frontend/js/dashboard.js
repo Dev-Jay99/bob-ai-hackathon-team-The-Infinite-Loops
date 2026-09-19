@@ -30,15 +30,64 @@
       return null;
     }
 
-    animateCount(document.getElementById('kpi-total'),    data.totalAlerts);
-    animateCount(document.getElementById('kpi-critical'), data.criticalAlerts);
-    animateCount(document.getElementById('kpi-high'),     data.highRiskAlerts);
-    animateCount(document.getElementById('kpi-pending'),  data.pendingInvestigations);
+    animateCount(document.getElementById('kpi-total'),              data.totalAlerts);
+    animateCount(document.getElementById('kpi-critical'),           data.criticalAlerts);
+    animateCount(document.getElementById('kpi-high'),               data.highRiskAlerts);
+    animateCount(document.getElementById('kpi-pending'),            data.pendingInvestigations);
+    if (document.getElementById('kpi-customer-denied')) {
+      animateCount(document.getElementById('kpi-customer-denied'),    data.customerDenied || 0);
+    }
+    if (document.getElementById('kpi-customer-confirmed')) {
+      animateCount(document.getElementById('kpi-customer-confirmed'), data.customerConfirmed || 0);
+    }
 
     document.getElementById('last-updated').textContent =
       'Updated ' + new Date().toLocaleTimeString('en-IN');
 
     return data;
+  }
+
+  // ── Customer Denied Alerts Table ─────────────────────────────
+  async function loadDeniedAlerts() {
+    const { data, error } = await API.getAlerts({ customerVerification: 'DENIED', limit: 5, page: 1 });
+
+    const state = document.getElementById('denied-state');
+    const wrap  = document.getElementById('denied-table-wrap');
+    const tbody = document.getElementById('denied-alerts-body');
+
+    if (!state || !wrap || !tbody) return;
+
+    if (error) {
+      state.innerHTML = `
+        <div class="state-container">
+          <div class="state-title">Failed to load denied transactions</div>
+          <div class="state-sub">${error}</div>
+        </div>`;
+      return;
+    }
+
+    if (!data.data || data.data.length === 0) {
+      state.innerHTML = `
+        <div class="state-container" style="padding:24px;">
+          <div style="color:var(--text-muted);font-size:13px;">No customer-disputed transactions currently waiting in queue.</div>
+        </div>`;
+      return;
+    }
+
+    state.style.display = 'none';
+    wrap.style.display  = 'block';
+
+    tbody.innerHTML = data.data.map(alert => `
+      <tr class="clickable" onclick="window.location.href='alert-details.html?id=${alert.id}'">
+        <td class="id-cell" style="color:#F87171;font-weight:700;">${alert.id}</td>
+        <td><strong>${alert.customer_name || alert.account_id}</strong></td>
+        <td class="amount-cell">₹${Number(alert.amount || 0).toLocaleString('en-IN')}</td>
+        <td>${UI.riskBadge(alert.risk_level)}</td>
+        <td><span style="color:#FCA5A5;font-style:italic;font-size:12px;">"${alert.customer_response || 'I did not make this transaction'}"</span></td>
+        <td class="text-secondary">${alert.location || '—'}</td>
+        <td><a href="alert-details.html?id=${alert.id}" class="btn btn-secondary btn-sm" style="font-size:11px;padding:3px 9px;">Investigate →</a></td>
+      </tr>
+    `).join('');
   }
 
   // ── Distribution Chart ───────────────────────────────────────
@@ -123,6 +172,7 @@
         <td>${alert.customer_name || alert.account_id}</td>
         <td class="amount-cell">₹${Number(alert.amount || 0).toLocaleString('en-IN')}</td>
         <td>${UI.riskBadge(alert.risk_level)}</td>
+        <td>${UI.verificationBadge(alert.customer_verification)}</td>
         <td>${UI.statusBadge(alert.status)}</td>
         <td class="text-secondary">${alert.location || '—'}</td>
         <td class="text-muted text-sm">${UI.formatDate(alert.created_at)}</td>
@@ -139,7 +189,8 @@
       '<div class="state-container"><div class="state-title">Chart unavailable</div></div>';
   }
 
-  await loadCriticalAlerts();
+  loadDeniedAlerts();
+  loadCriticalAlerts();
 
   // Global search redirect
   document.getElementById('globalSearch').addEventListener('keydown', e => {

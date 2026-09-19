@@ -93,9 +93,17 @@
       <select class="form-control" id="statusFilter">
         <option value="">All Statuses</option>
         <option value="OPEN">Open</option>
+        <option value="UNDER_INVESTIGATION">Under Investigation</option>
         <option value="ESCALATED">Escalated</option>
         <option value="MONITORED">Monitored</option>
         <option value="DISMISSED">Dismissed</option>
+      </select>
+      <select class="form-control" id="verificationFilter">
+        <option value="">All Verifications</option>
+        <option value="DENIED">Denied by Customer</option>
+        <option value="CONFIRMED">Confirmed by Customer</option>
+        <option value="PENDING">Pending Verification</option>
+        <option value="NOT_REQUIRED">Not Required</option>
       </select>
       <select class="form-control" id="locationFilter">
         <option value="">All Locations</option>
@@ -119,6 +127,7 @@
                 <th>Customer</th>
                 <th>Risk</th>
                 <th>Score</th>
+                <th>Verification</th>
                 <th>Status</th>
                 <th>Amount</th>
                 <th>Location</th>

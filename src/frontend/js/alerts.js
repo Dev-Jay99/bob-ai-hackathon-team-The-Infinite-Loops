@@ -23,9 +23,10 @@
 
   // ── Read URL params on load ───────────────────────────────────
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('search'))    document.getElementById('searchInput').value    = urlParams.get('search');
-  if (urlParams.get('riskLevel')) document.getElementById('riskFilter').value     = urlParams.get('riskLevel');
-  if (urlParams.get('status'))    document.getElementById('statusFilter').value   = urlParams.get('status');
+  if (urlParams.get('search'))               document.getElementById('searchInput').value        = urlParams.get('search');
+  if (urlParams.get('riskLevel'))            document.getElementById('riskFilter').value         = urlParams.get('riskLevel');
+  if (urlParams.get('status'))               document.getElementById('statusFilter').value       = urlParams.get('status');
+  if (urlParams.get('customerVerification')) document.getElementById('verificationFilter').value = urlParams.get('customerVerification');
 
   // ── Fetch and render ─────────────────────────────────────────
   async function fetchAlerts(page = 1) {
@@ -33,10 +34,11 @@
     const params = {
       page,
       limit: LIMIT,
-      search:    document.getElementById('searchInput').value.trim(),
-      riskLevel: document.getElementById('riskFilter').value,
-      status:    document.getElementById('statusFilter').value,
-      location:  document.getElementById('locationFilter').value,
+      search:               document.getElementById('searchInput').value.trim(),
+      riskLevel:            document.getElementById('riskFilter').value,
+      status:               document.getElementById('statusFilter').value,
+      customerVerification: document.getElementById('verificationFilter').value,
+      location:             document.getElementById('locationFilter').value,
     };
     lastParams = params;
 
@@ -94,6 +96,7 @@
             ${a.risk_score}/100
           </span>
         </td>
+        <td>${UI.verificationBadge ? UI.verificationBadge(a.customer_verification) : (a.customer_verification || '—')}</td>
         <td>${UI.statusBadge(a.status)}</td>
         <td class="amount-cell">₹${Number(a.amount || 0).toLocaleString('en-IN')}</td>
         <td class="text-secondary">${a.location || '—'}</td>
@@ -147,7 +150,7 @@
     debounceTimer = setTimeout(() => fetchAlerts(1), 300);
   });
 
-  ['riskFilter','statusFilter','locationFilter'].forEach(id => {
+  ['riskFilter','statusFilter','verificationFilter','locationFilter'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => fetchAlerts(1));
   });
 
@@ -155,10 +158,11 @@
   document.getElementById('nextBtn').addEventListener('click', () => fetchAlerts(currentPage + 1));
 
   document.getElementById('resetBtn').addEventListener('click', () => {
-    document.getElementById('searchInput').value  = '';
-    document.getElementById('riskFilter').value   = '';
-    document.getElementById('statusFilter').value = '';
-    document.getElementById('locationFilter').value = '';
+    document.getElementById('searchInput').value        = '';
+    document.getElementById('riskFilter').value         = '';
+    document.getElementById('statusFilter').value       = '';
+    document.getElementById('verificationFilter').value = '';
+    document.getElementById('locationFilter').value     = '';
     fetchAlerts(1);
   });
 

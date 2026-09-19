@@ -236,6 +236,118 @@
       flex-wrap: wrap;
       margin-top: 16px;
     }
+
+    /* Customer Verification Card */
+    .verification-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .verification-card.status-denied {
+      border-left: 4px solid var(--risk-critical);
+      background: linear-gradient(180deg, rgba(239, 68, 68, 0.06) 0%, var(--bg-panel) 100%);
+    }
+    .verification-card.status-confirmed {
+      border-left: 4px solid var(--risk-low);
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.06) 0%, var(--bg-panel) 100%);
+    }
+    .verification-card.status-pending {
+      border-left: 4px solid var(--risk-medium);
+      background: linear-gradient(180deg, rgba(234, 179, 8, 0.06) 0%, var(--bg-panel) 100%);
+    }
+    .statement-quote-box {
+      margin-top: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    .statement-quote-box.denied {
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #FCA5A5;
+    }
+    .statement-quote-box.confirmed {
+      border-color: rgba(34, 197, 94, 0.3);
+      color: #86EFAC;
+    }
+    .statement-quote-box.pending {
+      border-color: rgba(234, 179, 8, 0.3);
+      color: #FDE047;
+    }
+
+    /* Investigation Timeline */
+    .timeline-wrap {
+      position: relative;
+      padding-left: 32px;
+      margin-top: 14px;
+    }
+    .timeline-wrap::before {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 10px;
+      bottom: 10px;
+      width: 2px;
+      background: var(--border-subtle);
+    }
+    .timeline-step {
+      position: relative;
+      padding-bottom: 20px;
+    }
+    .timeline-step:last-child {
+      padding-bottom: 0;
+    }
+    .timeline-dot {
+      position: absolute;
+      left: -32px;
+      top: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--bg-panel);
+      border: 2px solid var(--border-normal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      z-index: 1;
+    }
+    .timeline-dot.dot-critical { border-color: var(--risk-critical); background: rgba(239, 68, 68, 0.18); color: #EF4444; }
+    .timeline-dot.dot-high     { border-color: var(--risk-high); background: rgba(249, 115, 22, 0.18); color: #F97316; }
+    .timeline-dot.dot-medium   { border-color: var(--risk-medium); background: rgba(234, 179, 8, 0.18); color: #EAB308; }
+    .timeline-dot.dot-low      { border-color: var(--risk-low); background: rgba(34, 197, 94, 0.18); color: #22C55E; }
+    .timeline-dot.dot-blue     { border-color: var(--accent-blue); background: var(--accent-blue-dim); color: var(--accent-blue-light); }
+    .timeline-dot svg { width: 12px; height: 12px; }
+
+    .timeline-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .timeline-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .timeline-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      white-space: nowrap;
+    }
+    .timeline-desc {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -293,6 +405,10 @@
       </div>
     </div>
     <div class="topbar-right">
+      <a href="customer-portal.html" class="btn btn-ghost btn-sm" style="font-size:12px;" target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Open Customer Portal ↗
+      </a>
       <div class="demo-badge">DEMO SIMULATION</div>
       <div class="user-avatar">SR</div>
       <div class="user-info">
@@ -326,6 +442,7 @@
           <a href="alerts.html" class="text-muted text-sm" style="margin-right:4px;">← Queue</a>
           <span class="alert-id" id="hdr-alert-id">—</span>
           <span id="hdr-risk-badge"></span>
+          <span id="hdr-verification-badge"></span>
           <span id="hdr-status-badge"></span>
         </div>
         <div class="risk-score-display">
@@ -341,6 +458,25 @@
       <div class="detail-layout">
         <!-- Left column -->
         <div>
+
+          <!-- Customer Verification Card -->
+          <div class="verification-card" id="customer-verification-card">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Customer Transaction Verification
+              <span id="card-verification-badge" style="margin-left:auto;"></span>
+            </div>
+            <div id="customer-verification-body"></div>
+          </div>
+
+          <!-- Investigation Timeline -->
+          <div class="card section" style="margin-bottom:20px;">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Investigation Audit Timeline
+            </div>
+            <div id="investigation-timeline-list"></div>
+          </div>
 
           <!-- Risk Assessment -->
           <div class="card section" style="margin-bottom:20px;">
@@ -387,6 +523,39 @@
             </div>
             <div id="mini-network" class="graph-container"></div>
             <div class="text-muted text-xs" style="margin-top:6px;">Click a node to inspect account. <a id="full-network-link" href="network.html">Open full network view →</a></div>
+          </div>
+
+          <!-- Customer Report Review (Approve & Start Investigation) -->
+          <div id="customer-report-review" class="decision-section section" style="margin-bottom:20px;display:none;">
+            <div class="section-title" style="color:#F87171;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              Customer Fraud Report — Pending Investigator Review
+              <span id="review-status-badge" style="margin-left:auto;"></span>
+            </div>
+            <div id="customer-report-body"></div>
+            <div class="form-group" style="margin-top:14px;">
+              <label class="form-label" for="start-inv-notes">Investigation Notes (Optional)</label>
+              <textarea class="form-control" id="start-inv-notes" rows="2" placeholder="Document initial observations before starting investigation…"></textarea>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-escalate" id="btn-start-investigation" style="background:linear-gradient(135deg,#DC2626,#B91C1C);padding:10px 24px;font-size:14px;font-weight:700;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                ✓ Approve &amp; Start Investigation
+              </button>
+            </div>
+          </div>
+
+          <!-- Investigation In Progress Banner -->
+          <div id="investigation-progress-banner" class="decision-section section" style="margin-bottom:20px;display:none;">
+            <div class="section-title" style="color:#3B82F6;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Investigation In Progress
+            </div>
+            <div id="investigation-progress-body"></div>
           </div>
 
           <!-- Human Decision -->

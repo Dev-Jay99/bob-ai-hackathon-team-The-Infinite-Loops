@@ -14,10 +14,10 @@ app.use(express.urlencoded({ extended: false }));
 // Serve frontend static files (includes chat.html)
 app.use(express.static(path.join(__dirname, 'frontend')));
 
-// API Routes
 const healthRouter         = require('./backend/routes/health');
 const alertsRouter         = require('./backend/routes/alerts');
 const accountsRouter       = require('./backend/routes/accounts');
+const transactionsRouter   = require('./backend/routes/transactions');
 const investigationsRouter = require('./backend/routes/investigations');
 const copilotRouter        = require('./backend/routes/copilot');
 const aiReportsRouter      = require('./backend/routes/ai-reports');
@@ -25,9 +25,15 @@ const aiReportsRouter      = require('./backend/routes/ai-reports');
 app.use('/api/health',         healthRouter);
 app.use('/api/alerts',         alertsRouter);
 app.use('/api/accounts',       accountsRouter);
+app.use('/api/transactions',   transactionsRouter);
 app.use('/api/investigations', investigationsRouter);
 app.use('/api/copilot',        copilotRouter);
 app.use('/api/reports',        aiReportsRouter);
+
+// Customer portal workspace
+app.get('/customer', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'pages', 'customer-portal.html'));
+});
 
 // AI Copilot workspace
 app.get('/copilot', (req, res) => {

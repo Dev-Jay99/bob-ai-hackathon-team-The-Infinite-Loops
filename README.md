@@ -47,68 +47,72 @@ FinGuard is an enterprise-grade, AI-powered Bank Fraud and AML Investigation Ope
 
 ---
 
-bob-ai-hackathon-team-The-Infinite-Loops/
-├── .github/
-├── demo/
-├── docs/
-│   ├── api-contract.md
-│   ├── architecture.md           # [Updated] Documenting full system architecture
-│   ├── setup-guide.md
-│   └── solution-overview.md      # [Updated] Documenting 2-way investigation workflow
-├── presentation/
-│   ├── README.md
-│   └── slides.pptx
-├── src/
-│   ├── server.js                 # [Updated] Registered transactions route
-│   ├── package.json
-│   ├── .env.example
-│   ├── data/
-│   │   ├── accounts.json
-│   │   ├── alerts.json
-│   │   ├── investigations.json
-│   │   └── transactions.json
-│   ├── backend/
-│   │   ├── ai/aiService.js       # [Updated] AI reporting & Copilot sync
-│   │   ├── db/
-│   │   │   ├── index.js
-│   │   │   ├── jsonStore.js      # [Updated] 2-way status workflow & CONFIRMED fixes
-│   │   │   └── pgStore.js        # [Updated] DB sync
-│   │   ├── risk-engine/
-│   │   │   └── scoring.js        # [Updated] Score-to-alert alignment
-│   │   └── routes/
-│   │       ├── alerts.js         # [Updated] Alert endpoints
-│   │       ├── investigations.js # [Updated] /start & /customer-status endpoints
-│   │       └── transactions.js   # [New] Customer verification & simulation routes
-│   └── frontend/
-│       ├── css/components.css    # [Updated] Badges & responsive styles
-│       ├── js/
-│       │   ├── alert-details.js  # [Updated] Approve & Start workflow, manual overrides
-│       │   ├── alerts.js         # [Updated] Queue filters
-│       │   ├── api.js            # [Updated] Investigation & verification API calls
-│       │   ├── customer-portal.js# [New] Dynamic customer verification & live polling
-│       │   ├── dashboard.js      # [Updated] Dashboard metrics
-│       │   └── nav.js            # [Updated] Status badges & toast utilities
-│       └── pages/
-│           ├── alert-details.html# [Updated] Customer fraud report review section
-│           ├── alerts.html       # [Updated] Under Investigation filter
-│           ├── customer-portal.html # [New] Customer verification interface
-│           ├── dashboard.html    # [Updated]
-│           └── investigations.html# [Updated]
-├── .gitignore                    # Prevents node_modules/ and logs from uploading
-├── CONTRIBUTING.md
-├── README.md                     # [Updated] Clean repository tree & demo instructions
-└── submission.yaml
-# 1. Stage all tracked changes and new files
-git add .
+## 📁 Repository Structure
 
-# 2. Verify everything is staged cleanly
-git status
+```
+src/
+├── server.js                  # Express entry point
+├── package.json               # Dependencies and scripts
+├── .env.example               # Environment variable template
+├── data/
+│   ├── generate-data.js       # Synthetic data generator (npm run seed)
+│   ├── accounts.json          # Account profiles & baselines
+│   ├── transactions.json      # Transaction records & verification status
+│   ├── alerts.json            # Generated alerts with risk scores
+│   └── investigations.json    # Investigation case states & timelines
+├── backend/
+│   ├── db/                    # Dual-mode database layer (JSON file store + PostgreSQL)
+│   ├── routes/                # REST API routes (alerts, investigations, transactions, accounts, copilot)
+│   ├── middleware/            # Error handler
+│   ├── risk-engine/           # Explainable 6-factor risk scoring engine
+│   ├── network/               # Multi-hop account network graph generator
+│   └── ai/                    # Case-aware AI Copilot & automated reporting service
+├── frontend/
+│   ├── index.html             # Redirect to dashboard
+│   ├── css/                   # Global design system & component styles
+│   ├── js/                    # API client, nav, customer-portal.js, alert-details.js, copilot.js
+│   └── pages/                 # dashboard, alerts, alert-details, customer-portal, network, investigations, reports
+├── tests/
+│   └── api.test.js            # Jest + Supertest test suite
+└── bob_sessions/              # Per-member session notes
+docs/
+├── api-contract.md            # API documentation
+├── architecture.md            # System architecture
+├── setup-guide.md             # How to run
+├── solution-overview.md       # Solution overview
+├── member-3-handoff.md        # Risk Engine integration guide
+└── member-4-handoff.md        # AI Copilot integration guide
+```
 
-# 3. Create the final commit
-git commit -m "feat: complete two-way customer verification and investigator workflow"
+---
 
-# 4. Push to your GitHub repository
-git push origin main
+## ⚡ How to Run
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/Dev-Jay99/bob-ai-hackathon-team-The-Infinite-Loops.git
+cd bob-ai-hackathon-team-The-Infinite-Loops/src
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment (optional — JSON mode works without any config)
+cp .env.example .env
+
+# 4. Generate synthetic data
+npm run seed
+
+# 5. Run the application
+npm start
+```
+
+Open **http://localhost:3000** — the dashboard loads immediately.
+
+- **Investigator Workspace:** `http://localhost:3000/pages/dashboard.html`
+- **Customer Verification Portal:** `http://localhost:3000/pages/customer-portal.html`
+- **Benchmark Case (ALT-10482):** `http://localhost:3000/pages/alert-details.html?id=ALT-10482`
+
+---
 
 
 ## 🖥️ Demo

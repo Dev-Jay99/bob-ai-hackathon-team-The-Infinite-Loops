@@ -102,6 +102,11 @@ function buildCaseContext(alertId, alert, transaction, account, riskAssessment, 
     },
     precedingSequence: seq,
     network: detail && detail.network ? detail.network : null,
+    customerVerification: (detail && detail.customerVerification) || {
+      status: (detail && detail.alert && detail.alert.customer_verification) || (transaction && transaction.customer_verification) || 'PENDING',
+      response: (detail && detail.alert && detail.alert.customer_response) || (transaction && transaction.customer_verification_response) || '',
+      timestamp: (detail && detail.alert && detail.alert.customer_verification_timestamp) || (transaction && transaction.customer_verification_timestamp) || null,
+    },
   };
 }
 
@@ -233,7 +238,45 @@ function dynamicAnswer(ctx, question) {
     );
   }
 
-  // 8. Next steps / Recommendations / Should I escalate?
+  // 8. Customer Denial & Evidence Review
+  if (/denied|denial|confirm|verification|customer response|what evidence|did the customer|dispute|evidence to review/.test(q)) {
+    const v = ctx.customerVerification || {};
+    const vStatus = v.status || 'PENDING';
+    const vResp = v.response || (vStatus === 'DENIED' ? 'I did not make this transaction' : (vStatus === 'CONFIRMED' ? 'Yes, this was me' : 'Awaiting customer response'));
+
+    if (vStatus === 'DENIED') {
+      return (
+        `**Customer Denial Evidence Review (Priority Case ${ctx.caseId}):**\n\n` +
+        `• **Customer Verification Status:** **DENIED** (Explicit cardholder dispute)\n` +
+        `• **Cardholder Statement:** *"${vResp}"*\n` +
+        `• **Recorded Timestamp:** ${v.timestamp ? new Date(v.timestamp).toLocaleString('en-IN') : 'Recently recorded'}\n\n` +
+        `**Key Evidence Signals to Review:**\n` +
+        `1. **Device Fingerprint Mismatch:** The transaction originated from **${t.device}**, which differs from ${c.name}'s usual device (**${c.usualDevice}**). Investigate session cookies and IP carrier logs.\n` +
+        `2. **Geolocation Breach:** Transaction conducted in **${t.location}**, whereas customer's registered base is **${c.usualLocation}**.\n` +
+        `3. **Overnight Timing:** Executed during off-peak hours (${t.time} IST) outside standard operating patterns.\n` +
+        `4. **Downstream Receiver Flow:** Funds were sent to **${t.receiverId}**, an identified pass-through node connected to high-risk accounts. Open the Account Network view to trace fund movement.\n\n` +
+        `*Investigator Recommendation:* Because the account owner formally reported this as unauthorized, **Escalate** the investigation immediately to freeze the beneficiary account and prepare a Suspicious Activity Report (SAR).`
+      );
+    } else if (vStatus === 'CONFIRMED') {
+      return (
+        `**Customer Verification Review:**\n\n` +
+        `• **Customer Verification Status:** **CONFIRMED** (Cardholder verified)\n` +
+        `• **Cardholder Statement:** *"${vResp}"*\n` +
+        `• **Verification Timestamp:** ${v.timestamp ? new Date(v.timestamp).toLocaleString('en-IN') : 'Recorded'}\n\n` +
+        `*Context:* Although this transaction of ${fmt(t.amount)} scored ${riskScore}/100 due to amount/location variance, account owner ${c.name} verified that they initiated this transfer.\n\n` +
+        `*Recommendation:* Retain risk indicators for historical audit compliance. Unless you observe evidence of extortion or coercive pass-through laundering, this case can be marked **Monitor** or **Mark Legitimate**.`
+      );
+    } else {
+      return (
+        `**Customer Verification Status:** **PENDING**\n\n` +
+        `• **Current State:** AI Copilot prompt was dispatched to account owner ${c.name} (${c.id}). Awaiting customer confirmation.\n` +
+        `• **Transaction Flagged:** ${fmt(t.amount)} to receiver ${t.receiverId} at ${t.time}.\n` +
+        `• **Recommended Action:** If customer confirmation is not received within standard SLA, perform outbound telephony contact before finalizing case disposition.`
+      );
+    }
+  }
+
+  // 9. Next steps / Recommendations / Should I escalate?
   if (/what should|what to do|next step|action|recommend|escalate|monitor|dismiss|decision/.test(q)) {
     return (
       `**Investigator Action Recommendations for Case ${ctx.caseId}:**\n\n` +

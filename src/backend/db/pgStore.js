@@ -160,12 +160,74 @@ async function updateInvestigationStatus(alertId, newStatus, notes) {
   return result.rows[0];
 }
 
+async function queryTransactions({ page = 1, limit = 20, accountId = '', customerVerification = '', search = '' } = {}) {
+  let where = 'WHERE 1=1';
+  const params = [];
+  let idx = 1;
+
+  if (accountId) {
+    where += ` AND (sender_id = $${idx} OR receiver_id = $${idx})`;
+    params.push(accountId);
+    idx++;
+  }
+  if (customerVerification) {
+    where += ` AND customer_verification = $${idx}`;
+    params.push(customerVerification.toUpperCase());
+    idx++;
+  }
+  if (search) {
+    where += ` AND (id ILIKE $${idx} OR location ILIKE $${idx})`;
+    params.push(`%${search}%`);
+    idx++;
+  }
+
+  const countRes = await pool.query(`SELECT COUNT(*) as count FROM transactions ${where}`, params);
+  const total = parseInt(countRes.rows[0].count, 10);
+  const offset = (page - 1) * limit;
+
+  const dataRes = await pool.query(
+    `SELECT * FROM transactions ${where} ORDER BY timestamp DESC LIMIT $${idx} OFFSET $${idx + 1}`,
+    [...params, limit, offset]
+  );
+
+  return {
+    data: dataRes.rows,
+    pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / limit) }
+  };
+}
+
+async function queryTransactionById(id) {
+  const res = await pool.query('SELECT * FROM transactions WHERE id = $1', [id]);
+  return res.rows[0] || null;
+}
+
+async function verifyTransaction(txnId, response, notes = '') {
+  // Delegate to jsonStore for simulation/demo mode or fallback
+  const jsonStore = require('./jsonStore');
+  return jsonStore.verifyTransaction(txnId, response, notes);
+}
+
+async function simulateTransaction(params) {
+  const jsonStore = require('./jsonStore');
+  return jsonStore.simulateTransaction(params);
+}
+
+async function resetBenchmarkTransaction() {
+  const jsonStore = require('./jsonStore');
+  return jsonStore.resetBenchmarkTransaction();
+}
+
 module.exports = {
   queryAlerts,
   queryAlertStats,
   queryAlertById,
   queryAccountById,
   queryAccountTransactions,
+  queryTransactions,
+  queryTransactionById,
+  verifyTransaction,
+  simulateTransaction,
+  resetBenchmarkTransaction,
   queryInvestigations,
   updateInvestigationStatus,
 };

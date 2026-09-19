@@ -50,8 +50,21 @@
   }
 
   function statusBadge(status) {
-    const s = (status || 'open').toLowerCase();
-    return `<span class="badge badge-${s}">${(status || 'OPEN').toUpperCase()}</span>`;
+    const s = (status || 'open').toLowerCase().replace(/[\s-]/g, '_');
+    const label = (status || 'OPEN').replace(/_/g, ' ').toUpperCase();
+    return `<span class="badge badge-${s}">${label}</span>`;
+  }
+
+  function verificationBadge(status) {
+    const s = (status || 'not_required').toLowerCase();
+    const map = {
+      confirmed: 'CONFIRMED',
+      denied: 'DENIED',
+      pending: 'PENDING',
+      not_required: 'NOT REQUIRED',
+    };
+    const label = map[s] || (status || 'NOT REQUIRED').toUpperCase();
+    return `<span class="badge badge-${s}">${label}</span>`;
   }
 
   function formatINR(amount) {
@@ -67,5 +80,5 @@
     });
   }
 
-  window.UI = { riskBadge, statusBadge, formatINR, formatDate };
+  window.UI = { riskBadge, statusBadge, verificationBadge, formatINR, formatDate };
 })();

@@ -25,12 +25,13 @@ async function apiFetch(path, options = {}) {
 // ─── Alerts ──────────────────────────────────────────────────────────────────
 async function getAlerts(params = {}) {
   const qs = new URLSearchParams();
-  if (params.page)      qs.set('page',      params.page);
-  if (params.limit)     qs.set('limit',     params.limit);
-  if (params.search)    qs.set('search',    params.search);
-  if (params.riskLevel) qs.set('riskLevel', params.riskLevel);
-  if (params.status)    qs.set('status',    params.status);
-  if (params.location)  qs.set('location',  params.location);
+  if (params.page)                 qs.set('page',                 params.page);
+  if (params.limit)                qs.set('limit',                params.limit);
+  if (params.search)               qs.set('search',               params.search);
+  if (params.riskLevel)            qs.set('riskLevel',            params.riskLevel);
+  if (params.status)               qs.set('status',               params.status);
+  if (params.location)             qs.set('location',             params.location);
+  if (params.customerVerification) qs.set('customerVerification', params.customerVerification);
   return apiFetch(`/api/alerts?${qs}`);
 }
 
@@ -67,6 +68,17 @@ async function postInvestigationAction(alertId, action, notes = '') {
   });
 }
 
+async function startInvestigation(alertId, notes = '') {
+  return apiFetch(`/api/investigations/${encodeURIComponent(alertId)}/start`, {
+    method: 'POST',
+    body: JSON.stringify({ notes }),
+  });
+}
+
+async function getCustomerInvestigationStatus(accountId) {
+  return apiFetch(`/api/investigations/customer-status/${encodeURIComponent(accountId)}`);
+}
+
 // ─── Copilot ─────────────────────────────────────────────────────────────────
 async function postCopilotChat(caseContext, message) {
   return apiFetch('/api/copilot/chat', {
@@ -97,6 +109,42 @@ async function postAiInvestigationReport(alertId, investigatorNotes, finalDecisi
   });
 }
 
+// ─── Transactions ────────────────────────────────────────────────────────────
+async function getTransactions(params = {}) {
+  const qs = new URLSearchParams();
+  if (params.page)         qs.set('page',         params.page);
+  if (params.limit)        qs.set('limit',        params.limit);
+  if (params.accountId)    qs.set('accountId',    params.accountId);
+  if (params.verification) qs.set('verification', params.verification);
+  if (params.status)       qs.set('status',       params.status);
+  if (params.search)       qs.set('search',       params.search);
+  return apiFetch(`/api/transactions?${qs}`);
+}
+
+async function getTransactionById(id) {
+  return apiFetch(`/api/transactions/${encodeURIComponent(id)}`);
+}
+
+async function verifyTransaction(id, response, notes = '') {
+  return apiFetch(`/api/transactions/${encodeURIComponent(id)}/verify`, {
+    method: 'POST',
+    body: JSON.stringify({ response, notes }),
+  });
+}
+
+async function simulateTransaction(data) {
+  return apiFetch('/api/transactions/simulate', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+async function resetBenchmarkTransaction() {
+  return apiFetch('/api/transactions/reset-benchmark', {
+    method: 'POST',
+  });
+}
+
 // ─── Export ───────────────────────────────────────────────────────────────────
 window.API = {
   getAlerts,
@@ -104,12 +152,20 @@ window.API = {
   getAlertById,
   getAccountById,
   getAccountTransactions,
+  getTransactions,
+  getTransactionById,
+  verifyTransaction,
+  simulateTransaction,
+  resetBenchmarkTransaction,
   getInvestigations,
   postInvestigationAction,
+  startInvestigation,
+  getCustomerInvestigationStatus,
   postCopilotChat,
   postCopilotBrief,
   postCopilotExplainAlert,
   postAiInvestigationReport,
 };
+
 
 

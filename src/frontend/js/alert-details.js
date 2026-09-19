@@ -42,17 +42,22 @@
 
   show('page-content');
 
-  const { alert, transaction, account, riskFactors, riskAssessment, recentTransactions, precedingSequence, investigation, network } = data;
+  const { alert, transaction, account, riskFactors, riskAssessment, recentTransactions, precedingSequence, investigation, timeline, network } = data;
+
+  let currentTimeline = timeline || (investigation && investigation.timeline) || [];
 
   // Build case context for copilot
   caseContext = {
-    alertId:       alert.id,
-    riskLevel:     riskAssessment ? riskAssessment.riskLevel : alert.risk_level,
-    riskScore:     riskAssessment ? riskAssessment.totalScore : alert.risk_score,
-    accountId:     alert.account_id,
-    customerName:  account ? account.customer_name : alert.account_id,
-    transactionId: alert.transaction_id,
-    amount:        transaction ? transaction.amount : 0,
+    alertId:                  alert.id,
+    riskLevel:                riskAssessment ? riskAssessment.riskLevel : alert.risk_level,
+    riskScore:                riskAssessment ? riskAssessment.totalScore : alert.risk_score,
+    accountId:                alert.account_id,
+    customerName:             account ? account.customer_name : alert.account_id,
+    transactionId:            alert.transaction_id,
+    amount:                   transaction ? transaction.amount : 0,
+    customerVerification:     alert.customer_verification || 'NOT_REQUIRED',
+    customerResponse:         alert.customer_response || '',
+    customerVerificationTime: alert.customer_verification_timestamp || null,
     factors:       riskAssessment ? riskAssessment.factors : (riskFactors || []).map(f => ({
       name: f.factor_name, score: f.score, maxScore: f.max_score, explanation: f.explanation,
     })),
@@ -62,15 +67,190 @@
   const score  = caseContext.riskScore;
 
   // ── Header ──────────────────────────────────────────────────────
-  text('hdr-alert-id',     alert.id);
-  text('hdr-risk-badge',   UI.riskBadge(level, true));
-  text('hdr-status-badge', UI.statusBadge(investigation ? investigation.status : alert.status));
-  text('hdr-created',      UI.formatDate(alert.created_at));
-  text('hdr-txn-ref',      alert.transaction_id ? `TXN: ${alert.transaction_id}` : '');
+  text('hdr-alert-id',           alert.id);
+  text('hdr-risk-badge',         UI.riskBadge(level, true));
+  text('hdr-verification-badge', UI.verificationBadge(alert.customer_verification));
+  text('hdr-status-badge',       UI.statusBadge(investigation ? investigation.status : alert.status));
+  text('hdr-created',            UI.formatDate(alert.created_at));
+  text('hdr-txn-ref',            alert.transaction_id ? `TXN: ${alert.transaction_id}` : '');
 
   const scoreEl = document.getElementById('hdr-score-num');
   scoreEl.textContent = score;
   scoreEl.className = `risk-score-number ${riskScoreClass(level)}`;
+
+  // ── Customer Verification Card ──────────────────────────────────
+  renderCustomerVerificationCard(alert, transaction, account);
+
+  function renderCustomerVerificationCard(alt, txn, acc) {
+    const cardEl  = document.getElementById('customer-verification-card');
+    const badgeEl = document.getElementById('card-verification-badge');
+    const bodyEl  = document.getElementById('customer-verification-body');
+    const status  = (alt.customer_verification || 'NOT_REQUIRED').toUpperCase();
+
+    badgeEl.innerHTML = UI.verificationBadge(status);
+    cardEl.className = `verification-card status-${status.toLowerCase()}`;
+
+    const customerName = acc ? acc.customer_name : (alt.customer_name || alt.account_id);
+    const timeStr = alt.customer_verification_timestamp
+      ? UI.formatDate(alt.customer_verification_timestamp)
+      : (txn && txn.timestamp ? UI.formatDate(txn.timestamp) : '—');
+
+    if (status === 'DENIED') {
+      bodyEl.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span class="badge badge-denied" style="font-size:12px;padding:4px 10px;">🚨 UNAUTHORIZED TRANSACTION REPORTED</span>
+          <span class="text-muted text-xs">Direct Account Owner Dispute</span>
+        </div>
+        <div class="statement-quote-box denied">
+          <div style="font-weight:600;margin-bottom:4px;color:#EF4444;">Customer Response: "No, I did not make this transaction"</div>
+          <div>Account owner <strong>${customerName}</strong> (${alt.account_id}) denied authorizing transaction <code>${alt.transaction_id || ''}</code> for <strong>${UI.formatINR(alt.amount)}</strong>.</div>
+        </div>
+        <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;font-size:12px;">
+          <div class="info-row"><span class="info-label">Verification Channel:</span> <span class="info-value">FinGuard Mobile & Web Banking Portal</span></div>
+          <div class="info-row"><span class="info-label">Dispute Timestamp:</span> <span class="info-value">${timeStr}</span></div>
+          <div class="info-row"><span class="info-label">Escalation Status:</span> <span class="info-value" style="color:var(--risk-critical);font-weight:600;">Priority CRITICAL → Human Investigator Queue</span></div>
+          <div class="info-row"><span class="info-label">Protective Hold:</span> <span class="info-value" style="color:#F59E0B;font-weight:600;">Recommended Immediate Card/UPI Suspension</span></div>
+        </div>
+      `;
+    } else if (status === 'CONFIRMED') {
+      bodyEl.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span class="badge badge-confirmed" style="font-size:12px;padding:4px 10px;">✓ CUSTOMER CONFIRMED</span>
+          <span class="text-muted text-xs">Legitimate Customer Activity</span>
+        </div>
+        <div class="statement-quote-box confirmed">
+          <div style="font-weight:600;margin-bottom:4px;color:#22C55E;">Customer Response: "Yes, this was me"</div>
+          <div>Account owner <strong>${customerName}</strong> confirmed making this transaction. Case retained in logs for compliance.</div>
+        </div>
+        <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;font-size:12px;">
+          <div class="info-row"><span class="info-label">Verification Channel:</span> <span class="info-value">FinGuard Mobile Banking Portal</span></div>
+          <div class="info-row"><span class="info-label">Confirmation Timestamp:</span> <span class="info-value">${timeStr}</span></div>
+          <div class="info-row"><span class="info-label">System Action:</span> <span class="info-value" style="color:var(--risk-low);font-weight:600;">No Fraud Case Required · Retained in Baseline History</span></div>
+        </div>
+      `;
+    } else if (status === 'PENDING') {
+      bodyEl.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span class="badge badge-pending" style="font-size:12px;padding:4px 10px;">⏳ VERIFICATION PENDING</span>
+          <span class="text-muted text-xs">Prompt Dispatched to Account Owner</span>
+        </div>
+        <div class="statement-quote-box pending">
+          <div style="font-weight:600;margin-bottom:4px;color:#EAB308;">Verification Prompt Active</div>
+          <div>FinGuard AI Copilot prompt was delivered to <strong>${customerName}</strong>. Awaiting customer confirmation.</div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <span class="text-muted text-xs" style="margin-right:auto;">Manual Verification Action:</span>
+          <button class="btn btn-sm" id="btn-card-confirm" style="background:rgba(34,197,94,0.12);color:#4ADE80;border:1px solid rgba(34,197,94,0.3);font-size:12px;padding:5px 12px;font-weight:600;cursor:pointer;">
+            ✓ Confirm as Legitimate (Customer Verified)
+          </button>
+          <button class="btn btn-sm" id="btn-card-deny" style="background:rgba(239,68,68,0.12);color:#F87171;border:1px solid rgba(239,68,68,0.3);font-size:12px;padding:5px 12px;font-weight:600;cursor:pointer;">
+            🚨 Report as Fraud (Customer Denied)
+          </button>
+        </div>
+      `;
+
+      // Attach handlers for card buttons
+      const btnCardConfirm = document.getElementById('btn-card-confirm');
+      if (btnCardConfirm) {
+        btnCardConfirm.onclick = async () => {
+          btnCardConfirm.disabled = true;
+          showToast('Confirming cardholder authorization…', 'info');
+          const txnId = alt.transaction_id || (txn ? txn.id : '');
+          const { data, error } = await API.verifyTransaction(txnId, 'CONFIRMED', 'Investigator confirmed cardholder authorization.');
+          if (error) {
+            showToast('Failed to confirm: ' + error, 'error');
+            btnCardConfirm.disabled = false;
+            return;
+          }
+          showToast('✓ Transaction confirmed as legitimate.', 'success');
+          alt.customer_verification = 'CONFIRMED';
+          alt.status = 'DISMISSED';
+          if (txn) txn.customer_verification = 'CONFIRMED';
+          if (investigation) {
+            investigation.customer_verification = 'CONFIRMED';
+            investigation.status = 'DISMISSED';
+          }
+          document.getElementById('hdr-verification-badge').innerHTML = UI.verificationBadge('CONFIRMED');
+          statusBadgeEl.innerHTML = UI.statusBadge('DISMISSED');
+          renderCustomerVerificationCard(alt, txn, acc);
+          renderCustomerReportReview();
+        };
+      }
+
+      const btnCardDeny = document.getElementById('btn-card-deny');
+      if (btnCardDeny) {
+        btnCardDeny.onclick = async () => {
+          btnCardDeny.disabled = true;
+          showToast('Escalating customer fraud report…', 'info');
+          const txnId = alt.transaction_id || (txn ? txn.id : '');
+          const { data, error } = await API.verifyTransaction(txnId, 'DENIED', 'Investigator recorded cardholder denial.');
+          if (error) {
+            showToast('Failed to report fraud: ' + error, 'error');
+            btnCardDeny.disabled = false;
+            return;
+          }
+          showToast('🚨 Transaction marked as denied by customer. Escalated.', 'error');
+          alt.customer_verification = 'DENIED';
+          alt.status = 'ESCALATED';
+          if (txn) txn.customer_verification = 'DENIED';
+          if (investigation) {
+            investigation.customer_verification = 'DENIED';
+            investigation.status = 'ESCALATED';
+          }
+          document.getElementById('hdr-verification-badge').innerHTML = UI.verificationBadge('DENIED');
+          statusBadgeEl.innerHTML = UI.statusBadge('ESCALATED');
+          renderCustomerVerificationCard(alt, txn, acc);
+          renderCustomerReportReview();
+        };
+      }
+    } else {
+      bodyEl.innerHTML = `
+        <div style="font-size:13px;color:var(--text-muted);padding:8px 0;">
+          Transaction risk score (${alt.risk_score}/100) fell within normal baseline activity. Interactive customer verification was not triggered.
+        </div>
+      `;
+    }
+  }
+
+  // ── Investigation Audit Timeline ────────────────────────────────
+  renderTimeline(currentTimeline);
+
+  function renderTimeline(events) {
+    const listEl = document.getElementById('investigation-timeline-list');
+    if (!events || !events.length) {
+      listEl.innerHTML = '<div class="text-muted text-sm">No timeline events recorded.</div>';
+      return;
+    }
+
+    const dotMap = {
+      TRANSACTION_DETECTED:     { cls: 'dot-blue',     icon: '💳' },
+      RISK_ANALYSIS_COMPLETED:  { cls: 'dot-high',     icon: '⚡' },
+      VERIFICATION_REQUESTED:   { cls: 'dot-medium',   icon: '🤖' },
+      CUSTOMER_DENIED:          { cls: 'dot-critical', icon: '🚨' },
+      CUSTOMER_CONFIRMED:       { cls: 'dot-low',      icon: '✅' },
+      INVESTIGATION_ESCALATED:  { cls: 'dot-critical', icon: '🔍' },
+      INVESTIGATION_STARTED:    { cls: 'dot-blue',     icon: '🛡️' },
+      INVESTIGATOR_DECISION:    { cls: 'dot-blue',     icon: '⚖️' },
+    };
+
+    listEl.innerHTML = `
+      <div class="timeline-wrap">
+        ${events.map(evt => {
+          const conf = dotMap[evt.type] || { cls: 'dot-blue', icon: '📌' };
+          return `
+            <div class="timeline-step">
+              <div class="timeline-dot ${conf.cls}">${conf.icon}</div>
+              <div class="timeline-header">
+                <span class="timeline-title">${evt.title}</span>
+                <span class="timeline-time">${UI.formatDate(evt.timestamp)}</span>
+              </div>
+              <div class="timeline-desc">${evt.description}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
 
   // ── Risk Factors ─────────────────────────────────────────────────
   const factors = riskAssessment ? riskAssessment.factors : [];
@@ -234,6 +414,8 @@
   }
 
   const SUGGESTED = [
+    'What did the customer state about this transaction?',
+    'Evaluate customer denial evidence',
     'Why is this alert critical?',
     'What is unusual about this transaction?',
     'Explain the account network',
@@ -395,11 +577,193 @@
     const newStatus = resp.investigation ? resp.investigation.status : action.toUpperCase();
     statusBadgeEl.innerHTML = UI.statusBadge(newStatus);
     showToast(`Case ${alert.id} marked as ${newStatus}`, 'success');
+
+    if (resp.investigation && Array.isArray(resp.investigation.timeline)) {
+      currentTimeline = resp.investigation.timeline;
+      renderTimeline(currentTimeline);
+    } else {
+      // Append local decision if backend didn't return complete array
+      currentTimeline.push({
+        id: `evt-local-${Date.now()}`,
+        type: 'INVESTIGATOR_DECISION',
+        title: `Investigator Action: ${newStatus}`,
+        description: notes ? `Investigator noted: "${notes}"` : `Case status marked as ${newStatus}.`,
+        timestamp: new Date().toISOString(),
+      });
+      renderTimeline(currentTimeline);
+    }
+
+    if (action === 'dismiss') {
+      alert.customer_verification = 'CONFIRMED';
+      if (transaction) transaction.customer_verification = 'CONFIRMED';
+      if (investigation) {
+        investigation.customer_verification = 'CONFIRMED';
+        investigation.status = 'DISMISSED';
+      }
+      document.getElementById('hdr-verification-badge').innerHTML = UI.verificationBadge('CONFIRMED');
+      renderCustomerVerificationCard(alert, transaction, account);
+      renderCustomerReportReview();
+    } else if (action === 'escalate') {
+      if (investigation) investigation.status = 'ESCALATED';
+      renderCustomerReportReview();
+    }
   }
 
   document.getElementById('btn-escalate').addEventListener('click',   () => handleAction('escalate'));
   document.getElementById('btn-monitor').addEventListener('click',    () => handleAction('monitor'));
   document.getElementById('btn-legitimate').addEventListener('click', () => handleAction('dismiss'));
+
+  // ── Customer Report Review & Start Investigation ──────────────────
+  renderCustomerReportReview();
+
+  function renderCustomerReportReview() {
+    const reviewSection = document.getElementById('customer-report-review');
+    const progressBanner = document.getElementById('investigation-progress-banner');
+    const vStatus = (alert.customer_verification || 'NOT_REQUIRED').toUpperCase();
+    const invStatus = investigation ? investigation.status : alert.status;
+    const customerName = account ? account.customer_name : (alert.customer_name || alert.account_id);
+
+    // Show the "Approve & Start Investigation" section only for ESCALATED + DENIED cases
+    if (vStatus === 'DENIED' && invStatus === 'ESCALATED') {
+      reviewSection.style.display = '';
+      progressBanner.style.display = 'none';
+
+      const reviewBody = document.getElementById('customer-report-body');
+      const deniedAt = alert.customer_verification_timestamp
+        ? UI.formatDate(alert.customer_verification_timestamp)
+        : 'Recently';
+
+      reviewBody.innerHTML = `
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-md);padding:16px;margin-top:12px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span class="badge badge-denied" style="font-size:12px;padding:4px 10px;">🚨 CUSTOMER DENIED TRANSACTION</span>
+            <span class="text-muted text-xs">Requires Investigator Approval</span>
+          </div>
+          <div style="font-size:14px;color:var(--text-secondary);line-height:1.6;">
+            <strong style="color:#F87171;">${customerName}</strong> (Account ${alert.account_id}) has reported transaction
+            <code style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:3px;">${alert.transaction_id}</code>
+            for <strong style="color:var(--risk-critical);">${UI.formatINR(transaction ? transaction.amount : alert.amount)}</strong>
+            as <em style="color:#FCA5A5;">unauthorized</em>.
+          </div>
+          <div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:12px;">
+            <div class="info-row"><span class="info-label">Customer Response:</span> <span class="info-value" style="color:#FCA5A5;font-weight:600;">"I did not make this transaction"</span></div>
+            <div class="info-row"><span class="info-label">Denied At:</span> <span class="info-value">${deniedAt}</span></div>
+            <div class="info-row"><span class="info-label">Priority:</span> <span class="info-value" style="color:var(--risk-critical);font-weight:700;">CRITICAL</span></div>
+            <div class="info-row"><span class="info-label">Current Status:</span> <span class="info-value" style="color:#F59E0B;font-weight:600;">ESCALATED — Awaiting Investigator Approval</span></div>
+          </div>
+          <div style="margin-top:14px;padding:12px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:var(--radius-sm);font-size:13px;color:#EAB308;">
+            ⚠ <strong>Action Required:</strong> Review the customer's fraud report, transaction details, and risk factors above. Click <strong>"Approve & Start Investigation"</strong> below to begin formal investigation and notify the customer.
+          </div>
+        </div>
+      `;
+
+      document.getElementById('review-status-badge').innerHTML =
+        '<span class="badge badge-denied" style="font-size:11px;">Awaiting Approval</span>';
+
+    } else if (vStatus === 'DENIED' && invStatus === 'UNDER_INVESTIGATION') {
+      // Show investigation in progress banner
+      reviewSection.style.display = 'none';
+      progressBanner.style.display = '';
+
+      const startedAt = investigation && investigation.investigation_started_at
+        ? UI.formatDate(investigation.investigation_started_at)
+        : 'Recently';
+
+      const progressBody = document.getElementById('investigation-progress-body');
+      progressBody.innerHTML = `
+        <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:var(--radius-md);padding:16px;margin-top:12px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span class="badge badge-open" style="font-size:12px;padding:4px 10px;background:rgba(59,130,246,0.15);color:#60A5FA;border-color:rgba(59,130,246,0.3);">🛡️ INVESTIGATION ACTIVE</span>
+            <span class="text-muted text-xs">Customer Has Been Notified</span>
+          </div>
+          <div style="font-size:14px;color:var(--text-secondary);line-height:1.6;">
+            Formal investigation for <strong>${customerName}</strong>'s fraud report on transaction
+            <code style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:3px;">${alert.transaction_id}</code>
+            is now <strong style="color:#60A5FA;">actively underway</strong>.
+          </div>
+          <div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:12px;">
+            <div class="info-row"><span class="info-label">Investigation Started:</span> <span class="info-value">${startedAt}</span></div>
+            <div class="info-row"><span class="info-label">Assigned Investigator:</span> <span class="info-value">S. Rajan (Senior Investigator)</span></div>
+            <div class="info-row"><span class="info-label">Status:</span> <span class="info-value" style="color:#60A5FA;font-weight:600;">UNDER INVESTIGATION</span></div>
+          </div>
+          <div style="margin-top:14px;padding:10px;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);border-radius:var(--radius-sm);font-size:13px;color:#4ADE80;">
+            ✓ Customer portal has been updated with "Investigation In Progress" status. Use the Investigator Decision panel below to Escalate, Monitor, or Dismiss this case.
+          </div>
+        </div>
+      `;
+    } else {
+      reviewSection.style.display = 'none';
+      progressBanner.style.display = 'none';
+    }
+  }
+
+  // "Approve & Start Investigation" button handler
+  document.getElementById('btn-start-investigation').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-start-investigation');
+    const notes = document.getElementById('start-inv-notes').value.trim();
+    btn.disabled = true;
+    btn.textContent = 'Starting Investigation…';
+
+    const { data: resp, error: err } = await API.startInvestigation(alert.id, notes);
+
+    btn.disabled = false;
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      ✓ Approve &amp; Start Investigation
+    `;
+
+    if (err) {
+      showToast('Failed to start investigation: ' + err, 'error');
+      return;
+    }
+
+    showToast(`✓ Investigation started for ${alert.id}. Customer portal updated.`, 'success');
+
+    // Update header badge
+    const newStatus = resp.investigation ? resp.investigation.status : 'UNDER_INVESTIGATION';
+    statusBadgeEl.innerHTML = UI.statusBadge(newStatus);
+
+    // Update timeline
+    if (resp.investigation && Array.isArray(resp.investigation.timeline)) {
+      currentTimeline = resp.investigation.timeline;
+      renderTimeline(currentTimeline);
+    }
+
+    // Update the investigation object reference
+    if (resp.investigation) {
+      Object.assign(investigation || {}, resp.investigation);
+    }
+
+    // Hide the approve section and show progress banner
+    document.getElementById('customer-report-review').style.display = 'none';
+    const progressBanner = document.getElementById('investigation-progress-banner');
+    progressBanner.style.display = '';
+
+    const startedAt = resp.investigation && resp.investigation.investigation_started_at
+      ? UI.formatDate(resp.investigation.investigation_started_at)
+      : UI.formatDate(new Date().toISOString());
+
+    const customerName = account ? account.customer_name : (alert.customer_name || alert.account_id);
+    document.getElementById('investigation-progress-body').innerHTML = `
+      <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:var(--radius-md);padding:16px;margin-top:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span class="badge badge-open" style="font-size:12px;padding:4px 10px;background:rgba(59,130,246,0.15);color:#60A5FA;border-color:rgba(59,130,246,0.3);">🛡️ INVESTIGATION ACTIVE</span>
+          <span class="text-muted text-xs">Customer Has Been Notified</span>
+        </div>
+        <div style="font-size:14px;color:var(--text-secondary);line-height:1.6;">
+          Investigation for <strong>${customerName}</strong>'s fraud report is now <strong style="color:#60A5FA;">actively underway</strong>.
+        </div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:12px;">
+          <div class="info-row"><span class="info-label">Investigation Started:</span> <span class="info-value">${startedAt}</span></div>
+          <div class="info-row"><span class="info-label">Assigned Investigator:</span> <span class="info-value">S. Rajan</span></div>
+          <div class="info-row"><span class="info-label">Status:</span> <span class="info-value" style="color:#60A5FA;font-weight:600;">UNDER INVESTIGATION</span></div>
+        </div>
+        <div style="margin-top:14px;padding:10px;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);border-radius:var(--radius-sm);font-size:13px;color:#4ADE80;">
+          ✓ Customer portal has been updated with "Investigation In Progress" status.
+        </div>
+      </div>
+    `;
+  });
 
   // Global search redirect
   document.getElementById('globalSearch').addEventListener('keydown', e => {

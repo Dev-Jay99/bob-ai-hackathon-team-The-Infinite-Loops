@@ -20,8 +20,9 @@ graph TD
 
 | Component | Technology | Responsibility |
 |---|---|---|
-| Frontend | HTML5, CSS3, Vanilla JavaScript | Dashboard, Alerts Queue, Alert Details workspace, Network Graph, Investigations, Dynamic PDF Reports, Chart.js Analytics |
-| API Server | Node.js + Express.js | REST API, static file serving, request validation, error handling, session proxying |
+| Frontend | HTML5, CSS3, Vanilla JavaScript | Dashboard, Alerts Queue, Alert Details workspace, Customer Portal, Network Graph, Investigations, Dynamic PDF Reports, Chart.js Analytics |
+| API Server | Node.js + Express.js | REST API (/api/alerts, /api/transactions, /api/investigations, /api/copilot, /api/reports), static file serving, validation |
+| Customer Verification | Express + AI Copilot prompt | Transaction verification flow: Normal (<35) vs Unusual (>=35), customer YES/NO prompt, atomic escalation |
 | Database Layer | JSON File Store / PostgreSQL | Dual-mode data persistence; auto-selected by `DATABASE_URL` env var |
 | Risk Engine | JavaScript / Node.js | Multi-factor risk scoring; returns 6 explainable factors per alert (benchmark ALT-10482 returns 94/CRITICAL, ALT-00200 returns 53/MEDIUM) |
 | Network Builder | JavaScript / vis-network | Returns vis-network compatible node/edge graph; benchmark returns A001→A023→A051/A072 pass-through chain |

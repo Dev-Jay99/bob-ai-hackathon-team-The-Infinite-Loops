@@ -48,6 +48,11 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Reports
       </a>
+      <div class="nav-section-label">Customer Simulation</div>
+      <a href="customer-portal.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Customer Portal (A001)
+      </a>
     </nav>
     <div class="sidebar-footer">
       FinGuard v1.0 · DEMO
@@ -63,6 +68,10 @@
       </div>
     </div>
     <div class="topbar-right">
+      <a href="customer-portal.html" class="btn btn-secondary btn-sm" style="font-size:12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Customer Portal (A001) ↗
+      </a>
       <div class="demo-badge">DEMO SIMULATION</div>
       <div class="user-avatar">SR</div>
       <div class="user-info">
@@ -77,17 +86,22 @@
     <div class="page-header page-header-row">
       <div>
         <h1>Operations Dashboard</h1>
-        <p class="subtitle">Real-time fraud and AML alert monitoring</p>
+        <p class="subtitle">Real-time fraud and AML alert monitoring &amp; customer verification queue</p>
       </div>
       <span id="last-updated" class="text-muted text-sm"></span>
     </div>
 
     <!-- KPI Cards -->
-    <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi-grid" id="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
       <div class="kpi-card blue">
         <div class="kpi-label">Total Alerts</div>
         <div class="kpi-value" id="kpi-total">—</div>
         <div class="kpi-sub">All time</div>
+      </div>
+      <div class="kpi-card critical">
+        <div class="kpi-label">Customer Denied</div>
+        <div class="kpi-value" id="kpi-customer-denied" style="color:#EF4444;">—</div>
+        <div class="kpi-sub">Cardholder reported fraud</div>
       </div>
       <div class="kpi-card critical">
         <div class="kpi-label">Critical Alerts</div>
@@ -104,11 +118,45 @@
         <div class="kpi-value" id="kpi-pending">—</div>
         <div class="kpi-sub">Open + Escalated</div>
       </div>
+      <div class="kpi-card" style="border-left:3px solid #22C55E;">
+        <div class="kpi-label">Customer Confirmed</div>
+        <div class="kpi-value" id="kpi-customer-confirmed" style="color:#22C55E;">—</div>
+        <div class="kpi-sub">Cardholder verified</div>
+      </div>
+    </div>
+
+    <!-- Customer Denied Priority Section -->
+    <div class="card" style="margin-bottom:24px;border:1px solid rgba(239,68,68,0.3);background:linear-gradient(180deg, rgba(239,68,68,0.04) 0%, var(--bg-panel) 100%);">
+      <div class="card-header">
+        <span class="card-title" style="color:#F87171;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Customer Denied Transactions (Priority Action Queue)
+        </span>
+        <a href="alerts.html?customerVerification=DENIED" class="btn btn-ghost btn-sm" style="color:#FCA5A5;">View Denied Queue →</a>
+      </div>
+      <div id="denied-state">
+        <div class="state-container"><div class="spinner"></div></div>
+      </div>
+      <div class="table-wrapper" id="denied-table-wrap" style="display:none;">
+        <table>
+          <thead>
+            <tr>
+              <th>Alert ID</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Risk</th>
+              <th>Customer Response</th>
+              <th>Location</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="denied-alerts-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Charts -->
     <div style="margin-bottom:24px;">
-
       <!-- Risk Distribution -->
       <div class="card">
         <div class="card-header" style="justify-content:space-between;">
@@ -125,7 +173,6 @@
           <canvas id="distChart" height="240"></canvas>
         </div>
       </div>
-
     </div>
 
     <!-- Recent Critical Alerts -->
@@ -150,6 +197,7 @@
               <th>Customer</th>
               <th>Amount</th>
               <th>Risk</th>
+              <th>Verification</th>
               <th>Status</th>
               <th>Location</th>
               <th>Time</th>
